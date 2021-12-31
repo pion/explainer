@@ -8,23 +8,23 @@ import (
 
 type (
 	peerConnectionExplainer int
-	SessionDescription      = peerconnection_explainer.SessionDescription
-	Result                  = peerconnection_explainer.Result
+	SessionDescription      = peerconnection_explainer.SessionDescription //nolint: golint
+	Result                  = peerconnection_explainer.Result             //nolint: golint
 )
 
 const (
-	BUFFER_SIZE int = 500000
+	bufferSize int = 500000
 )
 
 var (
-	buffer       [BUFFER_SIZE]byte
-	explainerMap map[peerConnectionExplainer]peerconnection_explainer.PeerConnectionExplainer
+	buffer       [bufferSize]byte                                                             //nolint: gochecknoglobals
+	explainerMap map[peerConnectionExplainer]peerconnection_explainer.PeerConnectionExplainer //nolint: gochecknoglobals
 )
 
 func main() {}
 
 //export getWasmMemoryBufferOffset
-func getWasmMemoryBufferOffset() *[BUFFER_SIZE]byte { //nolint: deadcode
+func getWasmMemoryBufferOffset() *[bufferSize]byte { //nolint: deadcode, unused
 	return &buffer
 }
 
@@ -34,19 +34,20 @@ func maybeInitExplainerMap() {
 	}
 }
 
+// NewPeerConnectionExplainer creates a new PeerConnectionExplainer
 //export NewPeerConnectionExplainer
-func NewPeerConnectionExplainer() peerConnectionExplainer { //nolint: deadcode
+func NewPeerConnectionExplainer() peerConnectionExplainer { //nolint: deadcode, golint, unused
 	maybeInitExplainerMap()
 
-	newExplainerId := peerConnectionExplainer(0)
-	for ; ; newExplainerId++ {
-		if _, ok := explainerMap[newExplainerId]; !ok {
-			explainerMap[newExplainerId] = peerconnection_explainer.NewPeerConnectionExplainer()
+	newExplainerID := peerConnectionExplainer(0)
+	for ; ; newExplainerID++ {
+		if _, ok := explainerMap[newExplainerID]; !ok {
+			explainerMap[newExplainerID] = peerconnection_explainer.New()
 			break
 		}
 	}
 
-	return newExplainerId
+	return newExplainerID
 }
 
 //export SetLocalDescription
@@ -63,7 +64,6 @@ func (pe peerConnectionExplainer) SetLocalDescription(length int) {
 	if pe, ok := explainerMap[pe]; ok {
 		pe.SetLocalDescription(s)
 	}
-
 }
 
 //export SetRemoteDescription

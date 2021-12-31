@@ -1,5 +1,6 @@
-package peerconnection_explainer
+package peerconnection_explainer //nolint golint
 
+// PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions
 type PeerConnectionExplainer interface {
 	// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
 	SetLocalDescription(sessionDescription SessionDescription)
@@ -11,7 +12,8 @@ type PeerConnectionExplainer interface {
 	Explain() Result
 }
 
-func NewPeerConnectionExplainer() PeerConnectionExplainer {
+// New returns a new PeerConnectionExplainer
+func New() PeerConnectionExplainer {
 	return &peerConnectionExplainer{}
 }
 
