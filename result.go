@@ -1,4 +1,4 @@
-package peerconnection_explainer
+package peerconnection_explainer //nolint golint
 
 // Result is the current status of the PeerConnectionExplainer
 type Result struct {
@@ -13,11 +13,10 @@ func (r *Result) init() {
 	r.Suggestions = make([]string, 0)
 }
 
+//nolint golint
 var (
 	errLocalAndRemoteSameType = "local and remote description are the same type"
-)
 
-var (
 	warnLocalDescriptionUnset  = "local description has not been set, full analysis not available"
 	warnRemoteDescriptionUnset = "remote description has not been set, full analysis not available"
 )
