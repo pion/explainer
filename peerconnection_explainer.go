@@ -1,10 +1,6 @@
 package peerconnection_explainer
 
-type PeerConnectionExplainer struct {
-}
+type PeerConnectionExplainer struct{}
 
-func (pe *PeerConnectionExplainer) SetOffer() {
-}
-
-func (pe *PeerConnectionExplainer) SetAnswer() {
-}
+func (pe *PeerConnectionExplainer) SetOffer()  {}
+func (pe *PeerConnectionExplainer) SetAnswer() {}
