@@ -38,22 +38,11 @@ It was designed to make learning and debugging of WebRTC easier.
 * DataChannel enabled?
 * How many tracks wish to be sent?
 * How many tracks are able to be received?
-* How many tracks
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "offer":  { "$ref": "#/$defs/parsedSessionDescription" },
-    "answer": { "$ref": "#/$defs/parsedSessionDescription" }
-  },
-  "required": [
-    "offerer",
-    "answerer"
-  ],
-  "$defs": {
-    "parsedSessionDescription": { "type": "string" }
-  }
-}
-```
+* Audio+Video Codecs
+  - Are they all the same for each MediaSection?
+* DTLS Fingerprint
+  - At Media or Global?
+  - Are they all the same?
+* ICE ufrag+pwd
+  - At Media or Global?
+  - Are they all the same?

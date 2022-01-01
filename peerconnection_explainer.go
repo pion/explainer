@@ -1,19 +1,30 @@
 package peerconnection_explainer
 
-type PeerConnectionExplainer struct{}
+type PeerConnectionExplainer interface {
+	// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
+	SetLocalDescription(sessionDescription SessionDescription)
 
-type SessionDescription struct {
-	Type string `json:"type"`
-	SDP  string `json:"sdp"`
+	// SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
+	SetRemoteDescription(sessionDescription SessionDescription)
+
+	// Explain returns the result of the current PeerConnectionExplainer.
+	Explain() Result
+}
+
+func NewPeerConnectionExplainer() PeerConnectionExplainer {
+	return &peerConnectionExplainer{}
+}
+
+type peerConnectionExplainer struct {
 }
 
 // SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
-func (pe *PeerConnectionExplainer) SetLocalDescription(sessionDescription SessionDescription) {}
+func (pe *peerConnectionExplainer) SetLocalDescription(sessionDescription SessionDescription) {}
 
 // SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
-func (pe *PeerConnectionExplainer) SetRemoteDescription(sessionDescription SessionDescription) {}
+func (pe *peerConnectionExplainer) SetRemoteDescription(sessionDescription SessionDescription) {}
 
 // Explain returns the result of the current PeerConnectionExplainer.
-func (pe *PeerConnectionExplainer) Explain() Result {
+func (pe *peerConnectionExplainer) Explain() Result {
 	return Result{}
 }

@@ -1,7 +1,23 @@
+// +build !js,!wasm
+
 package peerconnection_explainer
 
-import "testing"
+import (
+	"testing"
 
-func Test_SetOffer(t *testing.T) {}
+	"github.com/stretchr/testify/require"
+)
 
-func Test_SetAnswer(t *testing.T) {}
+func Test_SetOffer(t *testing.T) {
+	pe := NewPeerConnectionExplainer()
+	require.NotNil(t, pe)
+
+	pe.SetLocalDescription(SessionDescription{})
+}
+
+func Test_SetAnswer(t *testing.T) {
+	pe := NewPeerConnectionExplainer()
+	require.NotNil(t, pe)
+
+	pe.SetRemoteDescription(SessionDescription{})
+}
