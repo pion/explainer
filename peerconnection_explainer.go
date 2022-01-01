@@ -16,15 +16,29 @@ func NewPeerConnectionExplainer() PeerConnectionExplainer {
 }
 
 type peerConnectionExplainer struct {
+	localDescription, remoteDescription SessionDescription
 }
 
 // SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
-func (pe *peerConnectionExplainer) SetLocalDescription(sessionDescription SessionDescription) {}
+func (pe *peerConnectionExplainer) SetLocalDescription(sessionDescription SessionDescription) {
+	pe.localDescription = sessionDescription
+}
 
 // SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
-func (pe *peerConnectionExplainer) SetRemoteDescription(sessionDescription SessionDescription) {}
+func (pe *peerConnectionExplainer) SetRemoteDescription(sessionDescription SessionDescription) {
+	pe.remoteDescription = sessionDescription
+}
 
 // Explain returns the result of the current PeerConnectionExplainer.
 func (pe *peerConnectionExplainer) Explain() Result {
-	return Result{}
+	result := Result{}
+
+	if pe.localDescription.Type == "" || pe.localDescription.SDP == "" {
+		result.Warnings = append(result.Warnings, warnLocalDescriptionUnset)
+	}
+	if pe.remoteDescription.Type == "" || pe.remoteDescription.SDP == "" {
+		result.Warnings = append(result.Warnings, warnRemoteDescriptionUnset)
+	}
+
+	return result
 }
