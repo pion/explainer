@@ -52,9 +52,8 @@ From web directory run
 
 ```sh
 # Building WASM
-tinygo build -o wasm.wasm -target wasm  ..
+tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap ../pkg/wasm/
 
 # Run node.js
 node test.js
 ```
-

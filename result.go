@@ -7,6 +7,12 @@ type Result struct {
 	Suggestions []string `json:"suggestions"`
 }
 
+func (r *Result) init() {
+	r.Warnings = make([]string, 0)
+	r.Errors = make([]string, 0)
+	r.Suggestions = make([]string, 0)
+}
+
 var (
 	errLocalAndRemoteSameType = "local and remote description are the same type"
 )

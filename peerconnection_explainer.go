@@ -31,9 +31,7 @@ func (pe *peerConnectionExplainer) SetRemoteDescription(sessionDescription Sessi
 
 // Explain returns the result of the current PeerConnectionExplainer.
 func (pe *peerConnectionExplainer) Explain() (result Result) {
-	result.Warnings = make([]string, 0)
-	result.Errors = make([]string, 0)
-	result.Suggestions = make([]string, 0)
+	result.init()
 
 	if pe.localDescription.Type == "" || pe.localDescription.SDP == "" {
 		result.Warnings = append(result.Warnings, warnLocalDescriptionUnset)
@@ -44,6 +42,10 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 
 	if len(result.Warnings) == 2 {
 		return // No SessionDescriptions we can check
+	}
+
+	if pe.localDescription.Type == pe.remoteDescription.Type {
+		result.Errors = append(result.Errors, errLocalAndRemoteSameType)
 	}
 
 	return

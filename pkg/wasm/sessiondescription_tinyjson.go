@@ -6,7 +6,6 @@ import (
 	tinyjson "github.com/CosmWasm/tinyjson"
 	jlexer "github.com/CosmWasm/tinyjson/jlexer"
 	jwriter "github.com/CosmWasm/tinyjson/jwriter"
-	"github.com/pion/peerconnection_explainer"
 )
 
 // suppress unused package warning
@@ -16,7 +15,7 @@ var (
 	_ tinyjson.Marshaler
 )
 
-func tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(in *jlexer.Lexer, out *peerconnection_explainer.SessionDescription) {
+func tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(in *jlexer.Lexer, out *SessionDescription) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -49,7 +48,7 @@ func tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(in *jlexer.Lexer
 		in.Consumed()
 	}
 }
-func tinyjsonEa60cfe6EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writer, in peerconnection_explainer.SessionDescription) {
+func tinyjsonEa60cfe6EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writer, in SessionDescription) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -65,3 +64,4 @@ func tinyjsonEa60cfe6EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Wri
 	}
 	out.RawByte('}')
 }
+
