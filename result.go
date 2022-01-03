@@ -6,3 +6,12 @@ type Result struct {
 	Warnings    []string `json:"warnings"`
 	Suggestions []string `json:"suggestions"`
 }
+
+var (
+	errLocalAndRemoteSameType = "local and remote description are the same type"
+)
+
+var (
+	warnLocalDescriptionUnset  = "local description has not been set, full analysis not available"
+	warnRemoteDescriptionUnset = "remote description has not been set, full analysis not available"
+)

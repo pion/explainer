@@ -46,3 +46,15 @@ It was designed to make learning and debugging of WebRTC easier.
 * ICE ufrag+pwd
   - At Media or Global?
   - Are they all the same?
+
+### Building WASM
+From web directory run
+
+```sh
+# Building WASM
+tinygo build -o wasm.wasm -target wasm  ..
+
+# Run node.js
+node test.js
+```
+
