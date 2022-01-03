@@ -21,7 +21,7 @@ jobs:
         run: wget https://github.com/tinygo-org/tinygo/releases/download/v0.21.0/tinygo_0.21.0_amd64.deb && sudo dpkg -i tinygo_0.21.0_amd64.deb
 
       - name: Build WASM
-        run: cd www && cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js . && tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap ../pkg/wasm/
+        run: cd web && cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js . && tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap ../pkg/wasm/
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
@@ -29,4 +29,4 @@ jobs:
         with:
           github_token: ${{ secrets.PIONBOT_PRIVATE_KEY }}
           cname: pe.pion.ly
-          publish_dir: ./www
+          publish_dir: ./web
