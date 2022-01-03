@@ -18,7 +18,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install tinygo
-        run: wget https://github.com/tinygo-org/tinygo/releases/download/v0.21.0/tinygo_0.21.0_amd64.deb && dpkg -i tinygo_0.21.0_amd64.deb
+        run: wget https://github.com/tinygo-org/tinygo/releases/download/v0.21.0/tinygo_0.21.0_amd64.deb && sudo dpkg -i tinygo_0.21.0_amd64.deb
+
+      - name: Build WASM
+        run: cd www && cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js . && tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap ../pkg/wasm/
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
