@@ -1,9 +1,56 @@
 <html>
   <head>
     <title> PeerConnection Explainer </title>
+    <style>
+      textarea {
+        height: 10em;
+        width: 50em;
+      }
+    </style>
   </head>
 
   <body>
-    <h1> Test </h1>
+    Local Description: <textarea id="local-description" onchange="onTextAreaChange()"> </textarea> <br />
+    Remote Description: <textarea id="remote-description" onchange="onTextAreaChange()"> </textarea> <br />
+    Output: <textarea id="output"> </textarea>
   </body>
+
+  <script src="wasm_exec.js"> </script>
+  <script>
+    let wasm
+    let peerConnectionExplainer
+    let wasmMemory
+    let memoryOffset
+    window.onTextAreaChange = () => {
+      if (wasm === undefined) {
+        return
+      } else if (peerConnectionExplainer === undefined) {
+        peerConnectionExplainer = wasm.exports.NewPeerConnectionExplainer()
+        wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
+        memoryOffset = wasm.exports.getWasmMemoryBufferOffset()
+      }
+
+      let remoteDescription = document.getElementById('remote-description').value
+      let localDescription = document.getElementById('local-description').value
+
+      wasmMemory.set((new TextEncoder().encode(remoteDescription)), memoryOffset)
+      wasm.exports.SetRemoteDescription(peerConnectionExplainer, remoteDescription.length)
+
+      wasmMemory.set((new TextEncoder().encode(localDescription)), memoryOffset)
+      wasm.exports.SetLocalDescription(peerConnectionExplainer, localDescription.length)
+
+      let explainSize = wasm.exports.Explain(peerConnectionExplainer)
+      document.getElementById('output').value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + explainSize))
+    }
+
+    const go = new Go()
+    fetch('wasm.wasm').then(resp =>
+      resp.arrayBuffer()
+    ).then(bytes =>
+      WebAssembly.instantiate(bytes, go.importObject).then(function (obj) {
+        wasm = obj.instance
+        go.run(wasm)
+      })
+    )
+  </script>
 </html>
