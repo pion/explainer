@@ -1,6 +1,8 @@
 // Package explainer provides APIs to make debugging and learning WebRTC easier
 package explainer
 
+import "github.com/pion/explainer/internal/sdp"
+
 // PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions
 type PeerConnectionExplainer interface {
 	// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
@@ -51,5 +53,19 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 		result.Errors = append(result.Errors, errLocalAndRemoteSameType)
 	}
 
-	return
+	parsed := &sdp.SessionDescription{}
+
+	if pe.localDescription.SDP != "" {
+		if err := parsed.Unmarshal(pe.localDescription.SDP); err != nil {
+			result.Errors = append(result.Errors, err.Error())
+		}
+	}
+
+	if pe.remoteDescription.SDP != "" {
+		if err := parsed.Unmarshal(pe.remoteDescription.SDP); err != nil {
+			result.Errors = append(result.Errors, err.Error())
+		}
+	}
+
+	return result
 }

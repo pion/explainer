@@ -52,9 +52,15 @@ In the future we will also provide a GetStats explainer and possibly other objec
 From web directory run
 
 ```sh
-# Building WASM
-tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap ../pkg/wasm/
+# Copy wasm_exec.js
+cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js .
 
-# Run node.js
+# Building WASM
+tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap github.com/pion/explainer/pkg/wasm
+
+# Run HTTP Server
+python -m SimpleHTTPServer
+
+# Or instead run node in examples/nodejs
 node test.js
 ```

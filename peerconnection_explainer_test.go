@@ -37,5 +37,4 @@ func Test_Conflicting_Type(t *testing.T) {
 	results := pe.Explain()
 
 	require.Equal(t, results.Errors[0], errLocalAndRemoteSameType)
-
 }
