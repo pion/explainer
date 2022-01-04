@@ -1,15 +1,20 @@
 // Package explainer provides APIs to make debugging and learning WebRTC easier
 package explainer
 
-import "github.com/pion/explainer/internal/sdp"
+import (
+	"encoding/base64"
+
+	jlexer "github.com/CosmWasm/tinyjson/jlexer"
+	"github.com/pion/explainer/internal/sdp"
+)
 
 // PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions
 type PeerConnectionExplainer interface {
 	// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
-	SetLocalDescription(sessionDescription SessionDescription)
+	SetLocalDescription(input string)
 
 	// SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
-	SetRemoteDescription(sessionDescription SessionDescription)
+	SetRemoteDescription(input string)
 
 	// Explain returns the result of the current PeerConnectionExplainer.
 	Explain() Result
@@ -21,27 +26,44 @@ func NewPeerConnectionExplainer() PeerConnectionExplainer {
 }
 
 type peerConnectionExplainer struct {
-	localDescription, remoteDescription SessionDescription
+	localDescription, remoteDescription sessionDescription
+}
+
+func generateSessionDescription(input string) sessionDescription {
+	if possiblyDecoded, err := base64.StdEncoding.DecodeString(input); err == nil {
+		input = string(possiblyDecoded)
+	}
+
+	s := sessionDescription{}
+	r := jlexer.Lexer{Data: []byte(input)}
+	tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(&r, &s)
+	if r.Error() == nil {
+		return s
+	}
+
+	return sessionDescription{SDP: input}
 }
 
 // SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
-func (pe *peerConnectionExplainer) SetLocalDescription(sessionDescription SessionDescription) {
-	pe.localDescription = sessionDescription
+// The input can be a SessionDescriptionInit or just a SDP. The value can be base64 encoded
+func (pe *peerConnectionExplainer) SetLocalDescription(input string) {
+	pe.localDescription = generateSessionDescription(input)
 }
 
 // SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
-func (pe *peerConnectionExplainer) SetRemoteDescription(sessionDescription SessionDescription) {
-	pe.remoteDescription = sessionDescription
+// The input can be a SessionDescriptionInit or just a SDP. The value can be base64 encoded
+func (pe *peerConnectionExplainer) SetRemoteDescription(input string) {
+	pe.remoteDescription = generateSessionDescription(input)
 }
 
 // Explain returns the result of the current PeerConnectionExplainer.
 func (pe *peerConnectionExplainer) Explain() (result Result) {
 	result.init()
 
-	if pe.localDescription.Type == "" || pe.localDescription.SDP == "" {
+	if pe.localDescription.SDP == "" {
 		result.Warnings = append(result.Warnings, warnLocalDescriptionUnset)
 	}
-	if pe.remoteDescription.Type == "" || pe.remoteDescription.SDP == "" {
+	if pe.remoteDescription.SDP == "" {
 		result.Warnings = append(result.Warnings, warnRemoteDescriptionUnset)
 	}
 
@@ -49,7 +71,7 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 		return // No SessionDescriptions we can check
 	}
 
-	if pe.localDescription.Type == pe.remoteDescription.Type {
+	if pe.localDescription.Type != "" && pe.localDescription.Type == pe.remoteDescription.Type {
 		result.Errors = append(result.Errors, errLocalAndRemoteSameType)
 	}
 

@@ -8,33 +8,55 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_InputHeuristics(t *testing.T) {
+	t.Run("base64", func(t *testing.T) {
+		pe := NewPeerConnectionExplainer()
+
+		pe.SetRemoteDescription(`eyJ0eXBlIjogIm9mZmVyIiwgInNkcCI6ICJGb29iYXIifQ==`)
+		pe.SetLocalDescription(`eyJ0eXBlIjogIm9mZmVyIiwgInNkcCI6ICJGb29iYXIifQ==`)
+
+		require.Equal(t, pe.Explain().Errors[0], errLocalAndRemoteSameType)
+	})
+
+	t.Run("SDP", func(t *testing.T) {
+		pe := NewPeerConnectionExplainer()
+
+		pe.SetRemoteDescription("v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=-\r\nc=IN IP4 127.0.0.1\r\nt=0 0")
+		pe.SetLocalDescription("v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=-\r\nc=IN IP4 127.0.0.1\r\nt=0 0")
+
+		explained := pe.Explain()
+
+		require.Equal(t, 0, len(explained.Errors))
+		require.Equal(t, 0, len(explained.Warnings))
+		require.Equal(t, 0, len(explained.Suggestions))
+	})
+}
+
 func Test_Missing_Description(t *testing.T) {
 	t.Run("Local", func(t *testing.T) {
 		pe := NewPeerConnectionExplainer()
 
-		pe.SetRemoteDescription(SessionDescription{Type: "Offer", SDP: "Foobar"})
-		results := pe.Explain()
-
-		require.Equal(t, results.Warnings[0], warnLocalDescriptionUnset)
+		pe.SetRemoteDescription(`A`)
+		for _, w := range pe.Explain().Warnings {
+			require.NotEqual(t, w, warnRemoteDescriptionUnset)
+		}
 	})
 
 	t.Run("Remote", func(t *testing.T) {
 		pe := NewPeerConnectionExplainer()
 
-		pe.SetLocalDescription(SessionDescription{Type: "Offer", SDP: "Foobar"})
-		results := pe.Explain()
-
-		require.Equal(t, results.Warnings[0], warnRemoteDescriptionUnset)
+		pe.SetLocalDescription(`B`)
+		for _, w := range pe.Explain().Warnings {
+			require.NotEqual(t, w, warnLocalDescriptionUnset)
+		}
 	})
 }
 
 func Test_Conflicting_Type(t *testing.T) {
 	pe := NewPeerConnectionExplainer()
 
-	pe.SetRemoteDescription(SessionDescription{Type: "Offer", SDP: "Foobar"})
-	pe.SetLocalDescription(SessionDescription{Type: "Offer", SDP: "Foobar"})
+	pe.SetRemoteDescription(`{"type": "offer", "sdp": "Foobar"}`)
+	pe.SetLocalDescription(`{"type": "offer", "sdp": "Foobar"}`)
 
-	results := pe.Explain()
-
-	require.Equal(t, results.Errors[0], errLocalAndRemoteSameType)
+	require.Equal(t, pe.Explain().Errors[0], errLocalAndRemoteSameType)
 }

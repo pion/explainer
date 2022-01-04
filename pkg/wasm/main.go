@@ -1,15 +1,13 @@
 package main
 
 import (
-	jlexer "github.com/CosmWasm/tinyjson/jlexer"
 	jwriter "github.com/CosmWasm/tinyjson/jwriter"
 	"github.com/pion/explainer"
 )
 
 //nolint: deadcode, unused, golint
 type (
-	SessionDescription = explainer.SessionDescription
-	Result             = explainer.Result
+	Result = explainer.Result
 )
 
 const (
@@ -38,31 +36,15 @@ func maybeInitExplainer() { //nolint: deadcode, unused
 // SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
 //export SetLocalDescription
 func SetLocalDescription(length int) { //nolint: unused, deadcode
-	s := SessionDescription{}
-
-	r := jlexer.Lexer{Data: buffer[:length]}
-	tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(&r, &s)
-	if r.Error() != nil {
-		return
-	}
-
 	maybeInitExplainer()
-	peerConnectionExplainer.SetLocalDescription(s)
+	peerConnectionExplainer.SetLocalDescription(string(buffer[:length]))
 }
 
 // SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
 //export SetRemoteDescription
 func SetRemoteDescription(length int) { //nolint: deadcode, unused, golint
-	s := SessionDescription{}
-
-	r := jlexer.Lexer{Data: buffer[:length]}
-	tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(&r, &s)
-	if r.Error() != nil {
-		return
-	}
-
 	maybeInitExplainer()
-	peerConnectionExplainer.SetRemoteDescription(s)
+	peerConnectionExplainer.SetRemoteDescription(string(buffer[:length]))
 }
 
 // Explain returns the result of the current PeerConnectionExplainer.
