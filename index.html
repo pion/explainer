@@ -38,7 +38,7 @@
       wasm.exports.SetLocalDescription(localDescription.length)
 
       let explainSize = wasm.exports.Explain()
-      document.getElementById('output').value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + explainSize))
+      document.getElementById('output').value = JSON.stringify(JSON.parse(new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + explainSize))), null, 4)
     }
 
     const go = new Go()
