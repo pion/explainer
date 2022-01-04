@@ -40,9 +40,9 @@ func tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(in *jlexer.Lexer
 		}
 		switch key {
 		case "type":
-			out.Type = string(in.String())
+			out.Type = in.String()
 		case "sdp":
-			out.SDP = string(in.String())
+			out.SDP = in.String()
 		default:
 			in.SkipRecursive()
 		}
@@ -52,20 +52,4 @@ func tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(in *jlexer.Lexer
 	if isTopLevel {
 		in.Consumed()
 	}
-}
-func tinyjsonEa60cfe6EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writer, in sessionDescription) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"type\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.Type))
-	}
-	{
-		const prefix string = ",\"sdp\":"
-		out.RawString(prefix)
-		out.String(string(in.SDP))
-	}
-	out.RawByte('}')
 }
