@@ -6,19 +6,20 @@ import (
 	"github.com/pion/explainer"
 )
 
+//nolint: deadcode, unused, golint
 type (
-	peerConnectionExplainer int
-	SessionDescription      = explainer.SessionDescription //nolint: golint
-	Result                  = explainer.Result             //nolint: golint
+	SessionDescription = explainer.SessionDescription
+	Result             = explainer.Result
 )
 
 const (
 	bufferSize int = 500000
 )
 
+//nolint: unused, golint, gochecknoglobals
 var (
-	buffer       [bufferSize]byte                                              //nolint: gochecknoglobals
-	explainerMap map[peerConnectionExplainer]explainer.PeerConnectionExplainer //nolint: gochecknoglobals
+	buffer                  [bufferSize]byte
+	peerConnectionExplainer explainer.PeerConnectionExplainer
 )
 
 func main() {}
@@ -28,30 +29,15 @@ func getWasmMemoryBufferOffset() *[bufferSize]byte { //nolint: deadcode, unused
 	return &buffer
 }
 
-func maybeInitExplainerMap() {
-	if explainerMap == nil {
-		explainerMap = map[peerConnectionExplainer]explainer.PeerConnectionExplainer{}
+func maybeInitExplainer() { //nolint: deadcode, unused
+	if peerConnectionExplainer == nil {
+		peerConnectionExplainer = explainer.NewPeerConnectionExplainer()
 	}
 }
 
-// NewPeerConnectionExplainer creates a new PeerConnectionExplainer
-//export NewPeerConnectionExplainer
-func NewPeerConnectionExplainer() peerConnectionExplainer { //nolint: deadcode, golint, unused
-	maybeInitExplainerMap()
-
-	newExplainerID := peerConnectionExplainer(0)
-	for ; ; newExplainerID++ {
-		if _, ok := explainerMap[newExplainerID]; !ok {
-			explainerMap[newExplainerID] = explainer.NewPeerConnectionExplainer()
-			break
-		}
-	}
-
-	return newExplainerID
-}
-
+// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
 //export SetLocalDescription
-func (pe peerConnectionExplainer) SetLocalDescription(length int) {
+func SetLocalDescription(length int) { //nolint: unused, deadcode
 	s := SessionDescription{}
 
 	r := jlexer.Lexer{Data: buffer[:length]}
@@ -60,14 +46,13 @@ func (pe peerConnectionExplainer) SetLocalDescription(length int) {
 		return
 	}
 
-	maybeInitExplainerMap()
-	if pe, ok := explainerMap[pe]; ok {
-		pe.SetLocalDescription(s)
-	}
+	maybeInitExplainer()
+	peerConnectionExplainer.SetLocalDescription(s)
 }
 
+// SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
 //export SetRemoteDescription
-func (pe peerConnectionExplainer) SetRemoteDescription(length int) {
+func SetRemoteDescription(length int) { //nolint: deadcode, unused, golint
 	s := SessionDescription{}
 
 	r := jlexer.Lexer{Data: buffer[:length]}
@@ -76,25 +61,20 @@ func (pe peerConnectionExplainer) SetRemoteDescription(length int) {
 		return
 	}
 
-	maybeInitExplainerMap()
-	if pe, ok := explainerMap[pe]; ok {
-		pe.SetRemoteDescription(s)
-	}
+	maybeInitExplainer()
+	peerConnectionExplainer.SetRemoteDescription(s)
 }
 
+// Explain returns the result of the current PeerConnectionExplainer.
 //export Explain
-func (pe peerConnectionExplainer) Explain() int {
-	maybeInitExplainerMap()
+func Explain() int { //nolint: deadcode, unused
+	maybeInitExplainer()
 
-	if pe, ok := explainerMap[pe]; ok {
-		w := jwriter.Writer{}
-		tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(&w, pe.Explain())
-		if w.Error != nil {
-			return 0
-		}
-
-		return copy(buffer[:], w.Buffer.BuildBytes())
+	w := jwriter.Writer{}
+	tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(&w, peerConnectionExplainer.Explain())
+	if w.Error != nil {
+		return 0
 	}
 
-	return 0
+	return copy(buffer[:], w.Buffer.BuildBytes())
 }

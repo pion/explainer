@@ -18,14 +18,12 @@
   <script src="wasm_exec.js"> </script>
   <script>
     let wasm
-    let peerConnectionExplainer
     let wasmMemory
     let memoryOffset
     window.onTextAreaChange = () => {
       if (wasm === undefined) {
         return
-      } else if (peerConnectionExplainer === undefined) {
-        peerConnectionExplainer = wasm.exports.NewPeerConnectionExplainer()
+      } else if (wasmMemory === undefined) {
         wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
         memoryOffset = wasm.exports.getWasmMemoryBufferOffset()
       }
@@ -34,12 +32,12 @@
       let localDescription = document.getElementById('local-description').value
 
       wasmMemory.set((new TextEncoder().encode(remoteDescription)), memoryOffset)
-      wasm.exports.SetRemoteDescription(peerConnectionExplainer, remoteDescription.length)
+      wasm.exports.SetRemoteDescription(remoteDescription.length)
 
       wasmMemory.set((new TextEncoder().encode(localDescription)), memoryOffset)
-      wasm.exports.SetLocalDescription(peerConnectionExplainer, localDescription.length)
+      wasm.exports.SetLocalDescription(localDescription.length)
 
-      let explainSize = wasm.exports.Explain(peerConnectionExplainer)
+      let explainSize = wasm.exports.Explain()
       document.getElementById('output').value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + explainSize))
     }
 
