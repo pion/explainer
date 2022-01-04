@@ -1,4 +1,5 @@
-package peerconnection_explainer //nolint golint
+// Package explainer provides APIs to make debugging and learning WebRTC easier
+package explainer
 
 // PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions
 type PeerConnectionExplainer interface {
@@ -12,8 +13,8 @@ type PeerConnectionExplainer interface {
 	Explain() Result
 }
 
-// New returns a new PeerConnectionExplainer
-func New() PeerConnectionExplainer {
+// NewPeerConnectionExplainer returns a new PeerConnectionExplainer
+func NewPeerConnectionExplainer() PeerConnectionExplainer {
 	return &peerConnectionExplainer{}
 }
 

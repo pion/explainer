@@ -3,13 +3,13 @@ package main
 import (
 	jlexer "github.com/CosmWasm/tinyjson/jlexer"
 	jwriter "github.com/CosmWasm/tinyjson/jwriter"
-	"github.com/pion/peerconnection_explainer"
+	"github.com/pion/explainer"
 )
 
 type (
 	peerConnectionExplainer int
-	SessionDescription      = peerconnection_explainer.SessionDescription //nolint: golint
-	Result                  = peerconnection_explainer.Result             //nolint: golint
+	SessionDescription      = explainer.SessionDescription //nolint: golint
+	Result                  = explainer.Result             //nolint: golint
 )
 
 const (
@@ -17,8 +17,8 @@ const (
 )
 
 var (
-	buffer       [bufferSize]byte                                                             //nolint: gochecknoglobals
-	explainerMap map[peerConnectionExplainer]peerconnection_explainer.PeerConnectionExplainer //nolint: gochecknoglobals
+	buffer       [bufferSize]byte                                              //nolint: gochecknoglobals
+	explainerMap map[peerConnectionExplainer]explainer.PeerConnectionExplainer //nolint: gochecknoglobals
 )
 
 func main() {}
@@ -30,7 +30,7 @@ func getWasmMemoryBufferOffset() *[bufferSize]byte { //nolint: deadcode, unused
 
 func maybeInitExplainerMap() {
 	if explainerMap == nil {
-		explainerMap = map[peerConnectionExplainer]peerconnection_explainer.PeerConnectionExplainer{}
+		explainerMap = map[peerConnectionExplainer]explainer.PeerConnectionExplainer{}
 	}
 }
 
@@ -42,7 +42,7 @@ func NewPeerConnectionExplainer() peerConnectionExplainer { //nolint: deadcode, 
 	newExplainerID := peerConnectionExplainer(0)
 	for ; ; newExplainerID++ {
 		if _, ok := explainerMap[newExplainerID]; !ok {
-			explainerMap[newExplainerID] = peerconnection_explainer.New()
+			explainerMap[newExplainerID] = explainer.NewPeerConnectionExplainer()
 			break
 		}
 	}

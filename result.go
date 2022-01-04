@@ -1,4 +1,4 @@
-package peerconnection_explainer //nolint golint
+package explainer
 
 // Result is the current status of the PeerConnectionExplainer
 type Result struct {

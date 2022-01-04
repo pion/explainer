@@ -9,4 +9,4 @@ done
 
 cd pkg/wasm
 mv ../../*_tinyjson.go .
-sed -i 's/package peerconnection_explainer/package main/g' *_tinyjson.go
+sed -i 's/package explainer/package main/g' *_tinyjson.go

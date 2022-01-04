@@ -1,4 +1,4 @@
-module github.com/pion/peerconnection_explainer
+module github.com/pion/explainer
 
 go 1.15
 
