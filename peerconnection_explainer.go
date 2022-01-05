@@ -4,7 +4,6 @@ package explainer
 import (
 	"encoding/base64"
 
-	jlexer "github.com/CosmWasm/tinyjson/jlexer"
 	"github.com/pion/explainer/internal/sdp"
 )
 
@@ -35,9 +34,7 @@ func generateSessionDescription(input string) sessionDescription {
 	}
 
 	s := sessionDescription{}
-	r := jlexer.Lexer{Data: []byte(input)}
-	tinyjsonEa60cfe6DecodeGithubComPionPeerconnectionExplainer(&r, &s)
-	if r.Error() == nil {
+	if s.unmarshal(input); s.Type != "" && s.SDP != "" {
 		return s
 	}
 

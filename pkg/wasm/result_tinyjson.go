@@ -3,116 +3,9 @@
 package main
 
 import (
-	tinyjson "github.com/CosmWasm/tinyjson"
-	jlexer "github.com/CosmWasm/tinyjson/jlexer"
 	jwriter "github.com/CosmWasm/tinyjson/jwriter"
 )
 
-// suppress unused package warning
-var (
-	_ *jlexer.Lexer
-	_ *jwriter.Writer
-	_ tinyjson.Marshaler
-)
-
-func tinyjsonA669327DecodeGithubComPionPeerconnectionExplainer(in *jlexer.Lexer, out *Result) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "errors":
-			if in.IsNull() {
-				in.Skip()
-				out.Errors = nil
-			} else {
-				in.Delim('[')
-				if out.Errors == nil {
-					if !in.IsDelim(']') {
-						out.Errors = make([]string, 0, 4)
-					} else {
-						out.Errors = []string{}
-					}
-				} else {
-					out.Errors = (out.Errors)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v1 string
-					v1 = string(in.String())
-					out.Errors = append(out.Errors, v1)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
-		case "warnings":
-			if in.IsNull() {
-				in.Skip()
-				out.Warnings = nil
-			} else {
-				in.Delim('[')
-				if out.Warnings == nil {
-					if !in.IsDelim(']') {
-						out.Warnings = make([]string, 0, 4)
-					} else {
-						out.Warnings = []string{}
-					}
-				} else {
-					out.Warnings = (out.Warnings)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v2 string
-					v2 = string(in.String())
-					out.Warnings = append(out.Warnings, v2)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
-		case "suggestions":
-			if in.IsNull() {
-				in.Skip()
-				out.Suggestions = nil
-			} else {
-				in.Delim('[')
-				if out.Suggestions == nil {
-					if !in.IsDelim(']') {
-						out.Suggestions = make([]string, 0, 4)
-					} else {
-						out.Suggestions = []string{}
-					}
-				} else {
-					out.Suggestions = (out.Suggestions)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v3 string
-					v3 = string(in.String())
-					out.Suggestions = append(out.Suggestions, v3)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
 func tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writer, in Result) {
 	out.RawByte('{')
 	first := true
@@ -167,4 +60,3 @@ func tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writ
 	}
 	out.RawByte('}')
 }
-
