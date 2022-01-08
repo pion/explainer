@@ -60,3 +60,19 @@ func Explain() int { //nolint: deadcode, unused
 
 	return copy(buffer[:], w.Buffer.BuildBytes())
 }
+
+// GetLocalDescription returns the current SDP we are using from SetLocalDescription
+//export GetLocalDescription
+func GetLocalDescription() int { //nolint: deadcode, unused
+	maybeInitExplainer()
+
+	return copy(buffer[:], peerConnectionExplainer.GetLocalDescription())
+}
+
+// GetRemoteDescription returns the current SDP we are using from GetRemoteDescription
+//export GetRemoteDescription
+func GetRemoteDescription() int { //nolint: deadcode, unused
+	maybeInitExplainer()
+
+	return copy(buffer[:], peerConnectionExplainer.GetRemoteDescription())
+}

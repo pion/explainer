@@ -12,8 +12,14 @@ type PeerConnectionExplainer interface {
 	// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
 	SetLocalDescription(input string)
 
+	// GetLocalDescription returns the current SDP we are using from SetLocalDescription
+	GetLocalDescription() string
+
 	// SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
 	SetRemoteDescription(input string)
+
+	// GetRemoteDescription returns the current SDP we are using from SetRemoteDescription
+	GetRemoteDescription() string
 
 	// Explain returns the result of the current PeerConnectionExplainer.
 	Explain() Result
@@ -41,19 +47,14 @@ func generateSessionDescription(input string) sessionDescription {
 	return sessionDescription{SDP: input}
 }
 
-// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
-// The input can be a SessionDescriptionInit or just a SDP. The value can be base64 encoded
 func (pe *peerConnectionExplainer) SetLocalDescription(input string) {
 	pe.localDescription = generateSessionDescription(input)
 }
 
-// SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
-// The input can be a SessionDescriptionInit or just a SDP. The value can be base64 encoded
 func (pe *peerConnectionExplainer) SetRemoteDescription(input string) {
 	pe.remoteDescription = generateSessionDescription(input)
 }
 
-// Explain returns the result of the current PeerConnectionExplainer.
 func (pe *peerConnectionExplainer) Explain() (result Result) {
 	result.init()
 
@@ -88,3 +89,6 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 
 	return result
 }
+
+func (pe *peerConnectionExplainer) GetLocalDescription() string  { return pe.localDescription.SDP }
+func (pe *peerConnectionExplainer) GetRemoteDescription() string { return pe.remoteDescription.SDP }

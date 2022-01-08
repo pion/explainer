@@ -1,13 +1,13 @@
 package explainer
 
-// ResultPeerDetails contains the details published by a single peer. This is what
+// PeerDetails contains the details published by a single peer. This is what
 // a single peer Offered or Answered
-type ResultPeerDetails struct {
+type PeerDetails struct {
 }
 
-// ResultSessionDetails is the combination of the Offer/Answer and what the actual state
+// SessionDetails is the combination of the Offer/Answer and what the actual state
 // of the WebRTC session is.
-type ResultSessionDetails struct {
+type SessionDetails struct {
 }
 
 // Result is the current status of the PeerConnectionExplainer
@@ -16,10 +16,10 @@ type Result struct {
 	Warnings    []string `json:"warnings"`
 	Suggestions []string `json:"suggestions"`
 
-	LocalDetails  ResultPeerDetails `json:"localDetails"`
-	RemoteDetails ResultPeerDetails `json:"remoteDetails"`
+	LocalDetails  PeerDetails `json:"localDetails"`
+	RemoteDetails PeerDetails `json:"remoteDetails"`
 
-	SessionDetails ResultSessionDetails `json:"sessionDetails"`
+	SessionDetails SessionDetails `json:"sessionDetails"`
 }
 
 func (r *Result) init() {

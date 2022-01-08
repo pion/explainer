@@ -16,37 +16,26 @@
 <br>
 
 Explainer provides a PeerConnection Explainer that parses WebRTC Offers/Answers then provides summaries and suggestions. It returns information like
-what codecs are supported, what header extensions are enabled and how many tracks each peer is attempting to send. It also provides suggestions to fix
-common errors.
+what codecs are supported, how many tracks each peer is attempting to send and ICE information. It also provides suggestions to fix common errors.
 
-In the future we will also provide a GetStats explainer and possibly other objects. The goal is to make learning and debugging of WebRTC easier.
+The goal of this project is to make learning and debugging WebRTC easier.
+
+### Use Cases
+
+
 
 ### Features
 
-* **Session Description Parsing** - Human readable JSON output explaining the provided Offer/Answer
+* **Session Description Parsing** - Human readable JSON output explaining your Offer/Answer
 * **Session Description Suggestions** - Before debugging try `Pion Explainer` first! Searches for errors and possible improvements.
 * **Made for Learning** - Returns line numbers for suggestion and parsing.
-* **WASM** -- Can be run in browser and most programming languages.
+* **Portable** -- Available in Browser, Go, nodejs, C/C++, Java, C# and more thanks to WASM!
 
-### Planned Features
+***Future Features***
 
-* **getStats Parsing**
-* **getStats Suggestions**
-* **getStats Graphing**
-
-### Schema
-
-* DataChannel enabled?
-* How many tracks wish to be sent?
-* How many tracks are able to be received?
-* Audio+Video Codecs
-  - Are they all the same for each MediaSection?
-* DTLS Fingerprint
-  - At Media or Global?
-  - Are they all the same?
-* ICE ufrag+pwd
-  - At Media or Global?
-  - Are they all the same?
+* **getStats Parsing** - Human readable JSON output explaining the status of your PeerConnection. What it is sending and why.
+* **getStats Suggestions** - Understand why a certain bitrate is being sent or why you are seeing video corruption.
+* **getStats Graphing** - Generate values that are easily plottable in your tool of choice.
 
 ### Building WASM
 From web directory run
