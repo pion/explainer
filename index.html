@@ -3,23 +3,74 @@
     <title> PeerConnection Explainer </title>
     <style>
       textarea {
-        height: 10em;
-        width: 50em;
+        width: 90%;
       }
+
+      #parsed-local-description, #parsed-remote-description {
+        background-color: lightgray;
+
+      }
+
+      .flex-container {
+        text-align: center;
+        display: flex;
+      }
+
+      .flex-container div { flex: 1; }
     </style>
   </head>
 
   <body>
-    Local Description: <textarea id="local-description" onchange="onTextAreaChange()"> </textarea> <br />
-    Remote Description: <textarea id="remote-description" onchange="onTextAreaChange()"> </textarea> <br />
-    Output: <textarea id="output"> </textarea>
+    <div class="flex-container">
+      <div>
+        Local Description: <br />
+        <textarea id="local-description" onchange="onTextAreaChange()"></textarea>
+      </div>
+
+      <div>
+        Remote Description: <br />
+        <textarea id="remote-description" onchange="onTextAreaChange()"></textarea>
+      </div>
+    </div>
+
+    <hr />
+
+    <h1> Results </h1>
+    <div id="explain-results">
+    </div>
+
+    <hr />
+
+    <div class="flex-container">
+      <div>
+        Parsed Remote Description: <br />
+        <textarea readonly id="parsed-local-description"></textarea>
+      </div>
+
+      <div>
+        Parsed Remote Description: <br />
+        <textarea readonly id="parsed-remote-description"></textarea>
+      </div>
+    </div>
   </body>
 
   <script src="wasm_exec.js"> </script>
   <script>
-    let wasm
-    let wasmMemory
-    let memoryOffset
+    function renderOutput(output) {
+      const el = document.getElementById('explain-results')
+      el.innerHTML = ''
+
+      for (const [key, value] of Object.entries(output)) {
+        el.innerHTML += `<h2> ${key} </h2> <ul>`
+        value.forEach(i => {
+          el.innerHTML += `<li> ${value} </li>`
+
+        })
+        el.innerHTML += `</ul>`
+      }
+    }
+
+    let wasm, wasmMemory, memoryOffset
     window.onTextAreaChange = () => {
       if (wasm === undefined) {
         return
@@ -37,8 +88,10 @@
       wasmMemory.set((new TextEncoder().encode(localDescription)), memoryOffset)
       wasm.exports.SetLocalDescription(localDescription.length)
 
-      let explainSize = wasm.exports.Explain()
-      document.getElementById('output').value = JSON.stringify(JSON.parse(new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + explainSize))), null, 4)
+      renderOutput(JSON.parse(new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + wasm.exports.Explain()))))
+
+      document.getElementById('parsed-local-description').value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + wasm.exports.GetLocalDescription()))
+      document.getElementById('parsed-remote-description').value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + wasm.exports.GetRemoteDescription()))
     }
 
     const go = new Go()
