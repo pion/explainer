@@ -2,10 +2,7 @@
 
 cd ../..
 
-for i in "sessiondescription" "result"; do
-   tinyjson -all "$i".go
-done
-
+tinyjson -no_std_marshalers -all result.go
 cd pkg/wasm
 mv ../../*_tinyjson.go .
 sed -i 's/package explainer/package main/g' *_tinyjson.go

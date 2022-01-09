@@ -2,50 +2,11 @@ package sdp
 
 import (
 	"bufio"
-	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/pion/explainer/pkg/output"
 )
-
-type attributeStatus struct {
-	seen          bool
-	value         string
-	allowMultiple bool
-}
-
-// Detect if the current attribute is ok to be read (detect out of order errors)
-// or if it has already been set
-func attributeValid(statuses []*attributeStatus, attribute string) (err error) {
-	attrFound := false
-	for _, v := range statuses {
-		if attrFound && v.seen {
-			return errors.New("Attribute " + attribute + " was found, but later attribute " + v.value + " has already been set") //nolint
-		}
-
-		if v.value == attribute {
-			if v.seen && !v.allowMultiple {
-				return errors.New("Attribute " + attribute + " was attempted to be set twice: " + v.value) //nolint
-			}
-			attrFound = true
-			v.seen = true
-		}
-	}
-	return nil
-}
-
-func nextLine(scanner *bufio.Scanner) (key, value string, scanStatus bool, err error) {
-	if scanStatus = scanner.Scan(); !scanStatus {
-		return key, value, scanStatus, scanner.Err()
-	}
-
-	if len(scanner.Text()) < 3 {
-		return key, value, scanStatus, errors.New("line is not long enough to contain both a key and value: " + scanner.Text()) //nolint
-	} else if scanner.Text()[1] != '=' {
-		return key, value, scanStatus, errors.New("line is not a proper key value pair, second character is not `=`: " + scanner.Text()) //nolint
-	}
-
-	return string(scanner.Text()[0]), scanner.Text()[2:], scanStatus, err
-}
 
 // Unmarshal populates a SessionDescription from a raw string
 //
@@ -69,53 +30,52 @@ func nextLine(scanner *bufio.Scanner) (key, value string, scanStatus bool, err e
 // a=* (zero or more session attribute lines)
 // Zero or more media descriptions
 // https://tools.ietf.org/html/rfc4566#section-5
-func (s *SessionDescription) Unmarshal(raw string) error {
-	earlyEndErr := errors.New("session description ended before all required values were found") //nolint
-
+func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	s.Reset()
-	scanner := bufio.NewScanner(strings.NewReader(raw))
+	scanner := &sdpScanner{bufio.NewScanner(strings.NewReader(raw)), 0}
+	var err error
 
 	// v=
-	key, value, scanStatus, err := nextLine(scanner)
-	if err != nil {
-		return err
+	key, value, scanStatus, m := scanner.nextLine()
+	if m.Message != "" {
+		return m
 	} else if !scanStatus {
-		return earlyEndErr
+		return scanner.messageForLine(errEarlyEndVersion)
 	} else if key != "v" {
-		return errors.New("v (protocol version) was expected, but not found") //nolint
+		return scanner.messageForLine(errProtocolVersionNotFound)
 	} else if s.ProtocolVersion, err = strconv.Atoi(value); err != nil {
-		return errors.New("Failed to take protocol version to int") //nolint
+		return scanner.messageForLine(errInvalidProtocolVersion)
 	}
 
 	// o=
-	key, value, scanStatus, err = nextLine(scanner)
+	key, value, scanStatus, m = scanner.nextLine()
 	switch {
-	case err != nil:
-		return err
+	case m.Message != "":
+		return m
 	case !scanStatus:
-		return earlyEndErr
+		return scanner.messageForLine(errEarlyEndOriginator)
 	case key != "o":
-		return errors.New("o (originator and session identifier) was expected, but not found") //nolint
+		return scanner.messageForLine(errOriginatorNotFound)
 	}
-
 	s.Origin = value
 
-	key, value, scanStatus, err = nextLine(scanner)
+	// s=
+	key, value, scanStatus, m = scanner.nextLine()
 	switch {
 	case err != nil:
-		return err
+	case m.Message != "":
+		return m
 	case !scanStatus:
-		return earlyEndErr
+		return scanner.messageForLine(errEarlyEndSessionName)
 	case key != "s":
-		return errors.New("o (session name) was expected, but not found") //nolint
+		return scanner.messageForLine(errSessionNameNotFound)
 	}
-
 	s.SessionName = value
 
 	return s.unmarshalOptionalAttributes(scanner)
 }
 
-func (s *SessionDescription) unmarshalOptionalAttributes(scanner *bufio.Scanner) error {
+func (s *SessionDescription) unmarshalOptionalAttributes(scanner *sdpScanner) output.Message {
 	orderedSessionAttributes := []*attributeStatus{
 		{value: "v"},
 		{value: "o"},
@@ -135,13 +95,13 @@ func (s *SessionDescription) unmarshalOptionalAttributes(scanner *bufio.Scanner)
 	}
 
 	for {
-		key, value, scanStatus, err := nextLine(scanner)
-		if err != nil || !scanStatus {
-			return err
+		key, value, scanStatus, m := scanner.nextLine()
+		if m.Message != "" || !scanStatus {
+			return m
 		}
 
-		if err := attributeValid(orderedSessionAttributes, key); err != nil {
-			return err
+		if m = scanner.attributeValid(orderedSessionAttributes, key); m.Message != "" {
+			return m
 		}
 
 		switch key {
@@ -170,12 +130,12 @@ func (s *SessionDescription) unmarshalOptionalAttributes(scanner *bufio.Scanner)
 		case "m":
 			return s.unmarshalMedias(scanner, value)
 		default:
-			return errors.New("Invalid session attribute: " + key) //nolint
+			return scanner.messageForLine(errInvalidSessionAttribute + key)
 		}
 	}
 }
 
-func (s *SessionDescription) unmarshalMedias(scanner *bufio.Scanner, firstMediaName string) (err error) {
+func (s *SessionDescription) unmarshalMedias(scanner *sdpScanner, firstMediaName string) output.Message {
 	currentMedia := &MediaDescription{MediaName: firstMediaName}
 	orderedMediaAttributes := []*attributeStatus{
 		{value: "i"},
@@ -186,19 +146,19 @@ func (s *SessionDescription) unmarshalMedias(scanner *bufio.Scanner, firstMediaN
 	}
 	resetMediaAttributes := func() {
 		for _, v := range orderedMediaAttributes {
-			v.seen = false
+			v.line = 0
 		}
 	}
 
 	for {
-		key, value, scanStatus, err := nextLine(scanner)
-		if err != nil || !scanStatus { // This handles EOF, finish current MediaDescription
+		key, value, scanStatus, m := scanner.nextLine()
+		if m.Message != "" || !scanStatus { // This handles EOF, finish current MediaDescription
 			s.MediaDescriptions = append(s.MediaDescriptions, currentMedia)
-			return err
+			return m
 		}
 
-		if err := attributeValid(orderedMediaAttributes, key); err != nil {
-			return err
+		if m = scanner.attributeValid(orderedMediaAttributes, key); m.Message != "" {
+			return m
 		}
 
 		switch key {
@@ -217,7 +177,7 @@ func (s *SessionDescription) unmarshalMedias(scanner *bufio.Scanner, firstMediaN
 		case "a":
 			currentMedia.Attributes = append(currentMedia.Attributes, value)
 		default:
-			return errors.New("Invalid media attribute: " + key) //nolint
+			return scanner.messageForLine("Invalid media attribute: " + key)
 		}
 	}
 }

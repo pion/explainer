@@ -4,9 +4,17 @@ package main
 
 import (
 	jwriter "github.com/CosmWasm/tinyjson/jwriter"
+	"github.com/pion/explainer/pkg/output"
 )
 
-func tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writer, in Result) {
+func tinyjsonA669327EncodeGithubComPionExplainer(out *jwriter.Writer, in SessionDetails) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	out.RawByte('}')
+}
+
+func tinyjsonA669327EncodeGithubComPionExplainer1(out *jwriter.Writer, in Result) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -21,7 +29,7 @@ func tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writ
 				if v4 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v5))
+				tinyjsonA669327EncodeGithubComPionExplainerPkgOutput(out, v5)
 			}
 			out.RawByte(']')
 		}
@@ -37,7 +45,7 @@ func tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writ
 				if v6 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v7))
+				tinyjsonA669327EncodeGithubComPionExplainerPkgOutput(out, v7)
 			}
 			out.RawByte(']')
 		}
@@ -53,10 +61,77 @@ func tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(out *jwriter.Writ
 				if v8 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v9))
+				tinyjsonA669327EncodeGithubComPionExplainerPkgOutput(out, v9)
 			}
 			out.RawByte(']')
 		}
 	}
+	{
+		const prefix string = ",\"localDetails\":"
+		out.RawString(prefix)
+		tinyjsonA669327EncodeGithubComPionExplainer2(out, in.LocalDetails)
+	}
+	{
+		const prefix string = ",\"remoteDetails\":"
+		out.RawString(prefix)
+		tinyjsonA669327EncodeGithubComPionExplainer2(out, in.RemoteDetails)
+	}
+	{
+		const prefix string = ",\"sessionDetails\":"
+		out.RawString(prefix)
+		tinyjsonA669327EncodeGithubComPionExplainer(out, in.SessionDetails)
+	}
+	out.RawByte('}')
+}
+
+func tinyjsonA669327EncodeGithubComPionExplainerPkgOutput(out *jwriter.Writer, in output.Message) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"message\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Message))
+	}
+	{
+		const prefix string = ",\"source\":"
+		out.RawString(prefix)
+		if in.Sources == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v11, v12 := range in.Sources {
+				if v11 > 0 {
+					out.RawByte(',')
+				}
+				tinyjsonA669327EncodeGithubComPionExplainerPkgOutput1(out, v12)
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+
+func tinyjsonA669327EncodeGithubComPionExplainerPkgOutput1(out *jwriter.Writer, in output.Source) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"type\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"line\":"
+		out.RawString(prefix)
+		out.Int(int(in.Line))
+	}
+	out.RawByte('}')
+}
+
+func tinyjsonA669327EncodeGithubComPionExplainer2(out *jwriter.Writer, in PeerDetails) {
+	out.RawByte('{')
+	first := true
+	_ = first
 	out.RawByte('}')
 }

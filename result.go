@@ -1,5 +1,7 @@
 package explainer
 
+import "github.com/pion/explainer/pkg/output"
+
 // PeerDetails contains the details published by a single peer. This is what
 // a single peer Offered or Answered
 type PeerDetails struct {
@@ -12,9 +14,9 @@ type SessionDetails struct {
 
 // Result is the current status of the PeerConnectionExplainer
 type Result struct {
-	Errors      []string `json:"errors"`
-	Warnings    []string `json:"warnings"`
-	Suggestions []string `json:"suggestions"`
+	Errors      []output.Message `json:"errors"`
+	Warnings    []output.Message `json:"warnings"`
+	Suggestions []output.Message `json:"suggestions"`
 
 	LocalDetails  PeerDetails `json:"localDetails"`
 	RemoteDetails PeerDetails `json:"remoteDetails"`
@@ -23,9 +25,9 @@ type Result struct {
 }
 
 func (r *Result) init() {
-	r.Warnings = make([]string, 0)
-	r.Errors = make([]string, 0)
-	r.Suggestions = make([]string, 0)
+	r.Warnings = make([]output.Message, 0)
+	r.Errors = make([]output.Message, 0)
+	r.Suggestions = make([]output.Message, 0)
 }
 
 //nolint golint

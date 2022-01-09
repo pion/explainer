@@ -15,7 +15,7 @@ func Test_InputHeuristics(t *testing.T) {
 		pe.SetRemoteDescription(`eyJ0eXBlIjogIm9mZmVyIiwgInNkcCI6ICJGb29iYXIifQ==`)
 		pe.SetLocalDescription(`eyJ0eXBlIjogIm9mZmVyIiwgInNkcCI6ICJGb29iYXIifQ==`)
 
-		require.Equal(t, pe.Explain().Errors[0], errLocalAndRemoteSameType)
+		require.Equal(t, pe.Explain().Errors[0].Message, errLocalAndRemoteSameType)
 	})
 
 	t.Run("SDP", func(t *testing.T) {
@@ -38,7 +38,7 @@ func Test_Missing_Description(t *testing.T) {
 
 		pe.SetRemoteDescription(`A`)
 		for _, w := range pe.Explain().Warnings {
-			require.NotEqual(t, w, warnRemoteDescriptionUnset)
+			require.NotEqual(t, w.Message, warnRemoteDescriptionUnset)
 		}
 	})
 
@@ -47,7 +47,7 @@ func Test_Missing_Description(t *testing.T) {
 
 		pe.SetLocalDescription(`B`)
 		for _, w := range pe.Explain().Warnings {
-			require.NotEqual(t, w, warnLocalDescriptionUnset)
+			require.NotEqual(t, w.Message, warnLocalDescriptionUnset)
 		}
 	})
 }
@@ -58,5 +58,9 @@ func Test_Conflicting_Type(t *testing.T) {
 	pe.SetRemoteDescription(`{"type": "offer", "sdp": "Foobar"}`)
 	pe.SetLocalDescription(`{"type": "offer", "sdp": "Foobar"}`)
 
-	require.Equal(t, pe.Explain().Errors[0], errLocalAndRemoteSameType)
+	require.Equal(t, pe.Explain().Errors[0].Message, errLocalAndRemoteSameType)
+}
+
+func Test_Unescape(t *testing.T) {
+	require.Equal(t, generateSessionDescription(`{"type": "offer", "sdp": "Foo\r\nBar"}`).SDP, "Foo\nBar")
 }

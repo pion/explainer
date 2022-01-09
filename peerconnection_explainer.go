@@ -3,8 +3,10 @@ package explainer
 
 import (
 	"encoding/base64"
+	"strings"
 
 	"github.com/pion/explainer/internal/sdp"
+	"github.com/pion/explainer/pkg/output"
 )
 
 // PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions
@@ -40,11 +42,12 @@ func generateSessionDescription(input string) sessionDescription {
 	}
 
 	s := sessionDescription{}
-	if s.unmarshal(input); s.Type != "" && s.SDP != "" {
-		return s
+	if s.unmarshal(input); s.Type == "" && s.SDP == "" {
+		s.SDP = input
 	}
 
-	return sessionDescription{SDP: input}
+	s.SDP = strings.ReplaceAll(s.SDP, "\\r\\n", "\n")
+	return s
 }
 
 func (pe *peerConnectionExplainer) SetLocalDescription(input string) {
@@ -59,10 +62,10 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 	result.init()
 
 	if pe.localDescription.SDP == "" {
-		result.Warnings = append(result.Warnings, warnLocalDescriptionUnset)
+		result.Warnings = append(result.Warnings, output.Message{Message: warnLocalDescriptionUnset})
 	}
 	if pe.remoteDescription.SDP == "" {
-		result.Warnings = append(result.Warnings, warnRemoteDescriptionUnset)
+		result.Warnings = append(result.Warnings, output.Message{Message: warnRemoteDescriptionUnset})
 	}
 
 	if len(result.Warnings) == 2 {
@@ -70,20 +73,22 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 	}
 
 	if pe.localDescription.Type != "" && pe.localDescription.Type == pe.remoteDescription.Type {
-		result.Errors = append(result.Errors, errLocalAndRemoteSameType)
+		result.Errors = append(result.Errors, output.Message{Message: errLocalAndRemoteSameType})
 	}
 
 	parsed := &sdp.SessionDescription{}
 
 	if pe.localDescription.SDP != "" {
-		if err := parsed.Unmarshal(pe.localDescription.SDP); err != nil {
-			result.Errors = append(result.Errors, err.Error())
+		if m := parsed.Unmarshal(pe.localDescription.SDP); m.Message != "" {
+			m.Sources[0].Type = "local"
+			result.Errors = append(result.Errors, m)
 		}
 	}
 
 	if pe.remoteDescription.SDP != "" {
-		if err := parsed.Unmarshal(pe.remoteDescription.SDP); err != nil {
-			result.Errors = append(result.Errors, err.Error())
+		if m := parsed.Unmarshal(pe.localDescription.SDP); m.Message != "" {
+			m.Sources[0].Type = "remote"
+			result.Errors = append(result.Errors, m)
 		}
 	}
 

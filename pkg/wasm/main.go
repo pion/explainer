@@ -7,7 +7,9 @@ import (
 
 //nolint: deadcode, unused, golint
 type (
-	Result = explainer.Result
+	Result         = explainer.Result
+	SessionDetails = explainer.SessionDetails
+	PeerDetails    = explainer.PeerDetails
 )
 
 const (
@@ -53,7 +55,7 @@ func Explain() int { //nolint: deadcode, unused
 	maybeInitExplainer()
 
 	w := jwriter.Writer{}
-	tinyjsonA669327EncodeGithubComPionPeerconnectionExplainer(&w, peerConnectionExplainer.Explain())
+	tinyjsonA669327EncodeGithubComPionExplainer1(&w, peerConnectionExplainer.Explain())
 	if w.Error != nil {
 		return 0
 	}
