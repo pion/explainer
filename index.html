@@ -2,8 +2,15 @@
   <head>
     <title> PeerConnection Explainer </title>
     <style>
-      textarea {
+      .textarea {
+        text-align: left;
+        padding: 5px;
         width: 90%;
+        height: 5em;
+        white-space: pre;
+        overflow-wrap: normal;
+        overflow: scroll;
+        font-family:monospace;
       }
 
       #parsed-local-description, #parsed-remote-description {
@@ -24,12 +31,12 @@
     <div class="flex-container">
       <div>
         Local Description: <br />
-        <textarea id="local-description" onchange="onTextAreaChange()"></textarea>
+        <div id="local-description" contenteditable="true" class="textarea" oninput="onTextAreaChange()"></div>
       </div>
 
       <div>
         Remote Description: <br />
-        <textarea id="remote-description" onchange="onTextAreaChange()"></textarea>
+        <div id="remote-description" contenteditable="true" class="textarea" oninput="onTextAreaChange()"></div>
       </div>
     </div>
 
@@ -43,43 +50,62 @@
 
     <div class="flex-container">
       <div>
-        Parsed Remote Description: <br />
-        <textarea readonly id="parsed-local-description"></textarea>
+        Parsed Local Description: <br />
+        <div class="textarea" readonly id="parsed-local-description"></div>
       </div>
 
       <div>
         Parsed Remote Description: <br />
-        <textarea readonly id="parsed-remote-description"></textarea>
+        <div class="textarea" readonly id="parsed-remote-description"></div>
       </div>
     </div>
   </body>
 
   <script src="wasm_exec.js"> </script>
   <script>
+    function toggleSource(source) {
+      JSON.parse(source).forEach(s => {
+        document.getElementById(`${s.type}-${s.line}`).style.color = 'red';
+      })
+    }
+
     function renderOutput(output) {
       const el = document.getElementById('explain-results')
       el.innerHTML = ''
 
       for (const [key, value] of Object.entries(output)) {
         el.innerHTML += `<h2> ${key} </h2> <ul>`
-        value.forEach(i => {
-          el.innerHTML += `<li> ${value} </li>`
+        if (Array.isArray(value)) {
+          value.forEach(v => {
+            if (v.source) {
+              el.innerHTML += `<li> <a href="#" onclick=toggleSource('${JSON.stringify(v.source)}'); event.preventDefault();> ${v.message} </a> </li>`
+            } else {
+              el.innerHTML += `<li> ${v.message} </li>`
+            }
+          })
+        } else {
 
-        })
+        }
         el.innerHTML += `</ul>`
       }
     }
 
-    function setTextAreaHeight(textarea) {
-      textarea.style.height = '';
-      textarea.style.height = textarea.scrollHeight + "px"
+    function renderDescription(desc, el, prefix) {
+      desc.split("\n").forEach((line, i) => {
+        el.innerHTML += `<div id="${prefix}-${i}" >${line}<div>`
+      })
 
+      el.style.height = '';
+      el.style.height = el.scrollHeight + "px"
     }
 
     let wasm, memoryOffset
+    let wasmMemory = () => {
+      return new Uint8Array(wasm.exports.memory.buffer)
+    }
+
     let parsedRemoteDescription = document.getElementById('parsed-remote-description')
     let parsedLocalDescription = document.getElementById('parsed-local-description')
-
     window.onTextAreaChange = () => {
       if (wasm === undefined) {
         return
@@ -87,27 +113,20 @@
         memoryOffset = wasm.exports.getWasmMemoryBufferOffset()
       }
 
-      let remoteDescription = document.getElementById('remote-description').value
-      let localDescription = document.getElementById('local-description').value
+      let remoteDescription = document.getElementById('remote-description').innerText
+      let localDescription = document.getElementById('local-description').innerText
 
-      let wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
-      wasmMemory.set((new TextEncoder().encode(remoteDescription)), memoryOffset)
+      wasmMemory().set((new TextEncoder().encode(remoteDescription)), memoryOffset)
       wasm.exports.SetRemoteDescription(remoteDescription.length)
 
-      wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
-      wasmMemory.set((new TextEncoder().encode(localDescription)), memoryOffset)
+      wasmMemory().set((new TextEncoder().encode(localDescription)), memoryOffset)
       wasm.exports.SetLocalDescription(localDescription.length)
 
-      wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
-      renderOutput(JSON.parse(new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + wasm.exports.Explain()))))
+      let explainResult = wasm.exports.Explain()
+      renderOutput(JSON.parse(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + explainResult))))
 
-      wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
-      parsedLocalDescription.value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + wasm.exports.GetLocalDescription()))
-      setTextAreaHeight(parsedLocalDescription)
-
-      wasmMemory = new Uint8Array(wasm.exports.memory.buffer)
-      parsedRemoteDescription.value = new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + wasm.exports.GetRemoteDescription()))
-      setTextAreaHeight(parsedRemoteDescription)
+      renderDescription(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.GetLocalDescription())), parsedLocalDescription, 'local')
+      renderDescription(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.GetRemoteDescription())), parsedRemoteDescription, 'remote')
     }
 
     const go = new Go()
