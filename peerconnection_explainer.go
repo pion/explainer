@@ -36,6 +36,10 @@ type peerConnectionExplainer struct {
 	localDescription, remoteDescription sessionDescription
 }
 
+func (pe *peerConnectionExplainer) String() string {
+	return "PeerConnection Explainer"
+}
+
 func generateSessionDescription(input string) sessionDescription {
 	if possiblyDecoded, err := base64.StdEncoding.DecodeString(input); err == nil {
 		input = string(possiblyDecoded)
