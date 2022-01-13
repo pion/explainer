@@ -27,35 +27,35 @@ func Test_GlobalValues(t *testing.T) {
 
 	t.Run("v", func(t *testing.T) {
 		// No value
-		require.Equal(t, s.Unmarshal(""), output.Message(output.Message{Message: errEarlyEndVersion, Sources: []output.Source{{Line: 0}}}))
+		require.Equal(t, s.Unmarshal(""), output.NewMessage(errEarlyEndVersion, []output.Source{{Line: 0}}))
 
 		// Wrong key
-		require.Equal(t, s.Unmarshal("a=b"), output.Message(output.Message{Message: errProtocolVersionNotFound, Sources: []output.Source{{Line: 1}}}))
+		require.Equal(t, s.Unmarshal("a=b"), output.NewMessage(errProtocolVersionNotFound, []output.Source{{Line: 1}}))
 
 		// Invalid value
-		require.Equal(t, s.Unmarshal("v=b"), output.Message(output.Message{Message: errInvalidProtocolVersion, Sources: []output.Source{{Line: 1}}}))
+		require.Equal(t, s.Unmarshal("v=b"), output.NewMessage(errInvalidProtocolVersion, []output.Source{{Line: 1}}))
 	})
 
 	t.Run("o", func(t *testing.T) {
 		// No value
-		require.Equal(t, s.Unmarshal("v=2\r\n"), output.Message(output.Message{Message: errEarlyEndOriginator, Sources: []output.Source{{Line: 1}}}))
+		require.Equal(t, s.Unmarshal("v=2\r\n"), output.NewMessage(errEarlyEndOriginator, []output.Source{{Line: 1}}))
 
 		// Wrong key
-		require.Equal(t, s.Unmarshal("v=2\r\na=b"), output.Message(output.Message{Message: errOriginatorNotFound, Sources: []output.Source{{Line: 2}}}))
+		require.Equal(t, s.Unmarshal("v=2\r\na=b"), output.NewMessage(errOriginatorNotFound, []output.Source{{Line: 2}}))
 	})
 
 	t.Run("s", func(t *testing.T) {
 		// No value
-		require.Equal(t, s.Unmarshal("v=2\r\no=o"), output.Message(output.Message{Message: errEarlyEndSessionName, Sources: []output.Source{{Line: 2}}}))
+		require.Equal(t, s.Unmarshal("v=2\r\no=o"), output.NewMessage(errEarlyEndSessionName, []output.Source{{Line: 2}}))
 
 		// Wrong key
-		require.Equal(t, s.Unmarshal("v=2\r\no=o\r\na=b"), output.Message(output.Message{Message: errSessionNameNotFound, Sources: []output.Source{{Line: 3}}}))
+		require.Equal(t, s.Unmarshal("v=2\r\no=o\r\na=b"), output.NewMessage(errSessionNameNotFound, []output.Source{{Line: 3}}))
 	})
 }
 
 func Test_LineParsing(t *testing.T) {
 	s := SessionDescription{}
 
-	require.Equal(t, s.Unmarshal("a="), output.Message(output.Message{Message: errShortLine, Sources: []output.Source{{Line: 0}}}))
-	require.Equal(t, s.Unmarshal("a!b"), output.Message(output.Message{Message: errInvalidLine, Sources: []output.Source{{Line: 0}}}))
+	require.Equal(t, s.Unmarshal("a="), output.NewMessage(errShortLine, []output.Source{{Line: 0}}))
+	require.Equal(t, s.Unmarshal("a!b"), output.NewMessage(errInvalidLine, []output.Source{{Line: 0}}))
 }

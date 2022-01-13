@@ -12,10 +12,10 @@ type sdpScanner struct {
 }
 
 func (s *sdpScanner) messageForLine(message string) output.Message {
-	return output.Message{
-		Message: message,
-		Sources: []output.Source{{Line: s.currentLine}},
-	}
+	return output.NewMessage(
+		message,
+		[]output.Source{{Line: s.currentLine}},
+	)
 }
 
 func (s *sdpScanner) messageForError(err error) output.Message {

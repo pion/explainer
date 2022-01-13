@@ -11,15 +11,17 @@ WebAssembly.instantiate(require('fs').readFileSync('wasm.wasm'), importObject).t
   go.run(wasmModule.instance)
   let exports = wasmModule.instance.exports
 
-  let wasmMemory = new Uint8Array(exports.memory.buffer)
+  let wasmMemory = () => {
+    return new Uint8Array(exports.memory.buffer)
+  }
   let memoryOffset = exports.getWasmMemoryBufferOffset()
 
-  wasmMemory.set((new TextEncoder().encode(remoteDescription)), memoryOffset)
+  wasmMemory().set((new TextEncoder().encode(remoteDescription)), memoryOffset)
   exports.SetRemoteDescription(remoteDescription.length)
 
-  wasmMemory.set((new TextEncoder().encode(localDescription)), memoryOffset)
+  wasmMemory().set((new TextEncoder().encode(localDescription)), memoryOffset)
   exports.SetLocalDescription(localDescription.length)
 
   let explainSize = exports.Explain()
-  console.log(new TextDecoder().decode(wasmMemory.subarray(memoryOffset, memoryOffset + explainSize)))
+  console.log(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + explainSize)))
 })

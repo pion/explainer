@@ -92,6 +92,8 @@
     }
 
     function renderDescription(desc, el, prefix) {
+      el.innerHTML = ''
+
       desc.split("\n").forEach((line, i) => {
         el.innerHTML += `<div id="${prefix}-${i}" >${line}<div>`
       })

@@ -62,10 +62,10 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 	result.init()
 
 	if pe.localDescription.SDP == "" {
-		result.Warnings = append(result.Warnings, output.Message{Message: warnLocalDescriptionUnset})
+		result.Warnings = append(result.Warnings, output.NewMessage(warnLocalDescriptionUnset, nil))
 	}
 	if pe.remoteDescription.SDP == "" {
-		result.Warnings = append(result.Warnings, output.Message{Message: warnRemoteDescriptionUnset})
+		result.Warnings = append(result.Warnings, output.NewMessage(warnRemoteDescriptionUnset, nil))
 	}
 
 	if len(result.Warnings) == 2 {
@@ -73,7 +73,7 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 	}
 
 	if pe.localDescription.Type != "" && pe.localDescription.Type == pe.remoteDescription.Type {
-		result.Errors = append(result.Errors, output.Message{Message: errLocalAndRemoteSameType})
+		result.Errors = append(result.Errors, output.NewMessage(errLocalAndRemoteSameType, nil))
 	}
 
 	parsed := &sdp.SessionDescription{}

@@ -22,34 +22,29 @@ The goal of this project is to make learning and debugging WebRTC easier.
 
 ### Use Cases
 
-
+* **Debugging** - Discover common errors without having to read and compare SDP values.
+* **Learning** - Learn SDP keys and values and how they effect your WebRTC sessions.
+* **Passive Monitoring** - Add `Explainer` to your existing Signaling and Media servers. Surface and fix existing issues.
+* **Custom Tooling** - Include `Explainer` with your own UI in an existing project. Make it easier for your customers to use WebRTC.
 
 ### Features
 
 * **Session Description Parsing** - Human readable JSON output explaining your Offer/Answer
-* **Session Description Suggestions** - Before debugging try `Pion Explainer` first! Searches for errors and possible improvements.
+* **Session Description Suggestions** - Searches for errors and possible improvements, not just explaining the current values.
 * **Made for Learning** - Returns line numbers for suggestion and parsing.
-* **Portable** -- Available in Browser, Go, nodejs, C/C++, Java, C# and more thanks to WASM!
+* **Portable** - Available in Browser, Go, nodejs, C/C++, Java, C# and more thanks to WASM.
+* **Interactive** - Web demo provides interactive discovery of the SessionDescription.
+* **Flexible** - Accepts SesionDescriptions or SDP, either value can be base64
+* **Decoupled** - Easily ship your own UI, `Explainer` can run on clients or servers
 
-***Future Features***
+#### Future Features
 
 * **getStats Parsing** - Human readable JSON output explaining the status of your PeerConnection. What it is sending and why.
 * **getStats Suggestions** - Understand why a certain bitrate is being sent or why you are seeing video corruption.
 * **getStats Graphing** - Generate values that are easily plottable in your tool of choice.
 
-### Building WASM
-From web directory run
+### Running
 
-```sh
-# Copy wasm_exec.js
-cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js .
+Examples for different languages are in the `examples` directory. A Web UI is provided in the `web` directory.
 
-# Building WASM
-tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap github.com/pion/explainer/pkg/wasm
-
-# Run HTTP Server
-python -m SimpleHTTPServer
-
-# Or instead run node in examples/nodejs
-node test.js
-```
+Each example will have a `README.md` describing its specific setup.

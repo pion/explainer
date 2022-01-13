@@ -7,6 +7,15 @@ type Message struct {
 	Sources []Source `json:"source"`
 }
 
+// NewMessage creates a Message and handles nil Sources
+func NewMessage(message string, sources []Source) Message {
+	if sources == nil {
+		sources = make([]Source, 0)
+	}
+
+	return Message{message, sources}
+}
+
 // Source is the file that caused this message to be generated
 type Source struct {
 	Type string `json:"type"`
