@@ -78,7 +78,7 @@
         el.innerHTML += `<h2> ${key} </h2> <ul>`
         if (Array.isArray(value)) {
           value.forEach(v => {
-            if (v.source) {
+            if (v.source.length !== 0) {
               el.innerHTML += `<li> <a href="#" onclick=toggleSource('${JSON.stringify(v.source)}'); event.preventDefault();> ${v.message} </a> </li>`
             } else {
               el.innerHTML += `<li> ${v.message} </li>`
