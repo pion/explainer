@@ -1,0 +1,258 @@
+<html>
+  <head>
+    <title>Peer Connection Explainer</title>
+    <script src="wasm_exec.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      let wasm, memoryOffset;
+      let wasmMemory = () => {
+        return new Uint8Array(wasm.exports.memory.buffer);
+      };
+
+      const go = new Go();
+      fetch("wasm.wasm")
+        .then((resp) => resp.arrayBuffer())
+        .then((bytes) =>
+          WebAssembly.instantiate(bytes, go.importObject).then(function (obj) {
+            wasm = obj.instance;
+            go.run(wasm);
+          })
+        );
+
+      function renderOutput(output) {
+        const errorList = document.getElementById("errorList");
+        output?.errors?.map((item) => {
+          errorList.innerHTML += `<li> ${item.message} </li>`;
+        });
+
+        const suggestionList = document.getElementById("suggestionList");
+        output?.suggestions?.map((item) => {
+          suggestionList.innerHTML += `<li> ${item.message} </li>`;
+        });
+
+        const warningList = document.getElementById("warningList");
+        output?.warnings?.map((item) => {
+          warningList.innerHTML += `<li> ${item.message} </li>`;
+        });
+      }
+
+      const parse = () => {
+        let parsedRemoteDescription = document.getElementById(
+          "parsedRemoteDescription"
+        );
+        let parsedLocalDescription = document.getElementById(
+          "parsedLocalDescription"
+        );
+
+        if (wasm === undefined) {
+          return;
+        } else if (memoryOffset === undefined) {
+          memoryOffset = wasm.exports.getWasmMemoryBufferOffset();
+        }
+
+        let remoteDescription =
+          document.getElementById("remoteDescription").value;
+        let localDescription =
+          document.getElementById("localDescription").value;
+
+        wasmMemory().set(
+          new TextEncoder().encode(remoteDescription),
+          memoryOffset
+        );
+        wasm.exports.SetRemoteDescription(remoteDescription.length);
+
+        wasmMemory().set(
+          new TextEncoder().encode(localDescription),
+          memoryOffset
+        );
+        wasm.exports.SetLocalDescription(localDescription.length);
+
+        let explainResult = wasm.exports.Explain();
+        const output = JSON.parse(
+          new TextDecoder().decode(
+            wasmMemory().subarray(memoryOffset, memoryOffset + explainResult)
+          )
+        );
+        renderOutput(output);
+
+        parsedLocalDescription.value = new TextDecoder().decode(
+          wasmMemory().subarray(
+            memoryOffset,
+            memoryOffset + wasm.exports.GetLocalDescription()
+          )
+        );
+        parsedRemoteDescription.value = new TextDecoder().decode(
+          wasmMemory().subarray(
+            memoryOffset,
+            memoryOffset + wasm.exports.GetRemoteDescription()
+          )
+        );
+      };
+    </script>
+  </head>
+
+  <body>
+    <div id="root">
+      <div class="min-h-full">
+        <nav class="bg-indigo-600">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <img
+                    class="h-24 w-24"
+                    src="https://pion.ly/img/pion-logo.svg"
+                    alt="Workflow"
+                  />
+                </div>
+                <div class="hidden md:block">
+                  <div class="ml-10 flex items-baseline space-x-4">
+                    <a
+                      href="#"
+                      class="bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                      aria-current="page"
+                      >Explainer</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="-mr-2 flex md:hidden">
+                <button
+                  class="bg-indigo-600 inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-500 hover:bg-opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white"
+                  id="headlessui-disclosure-button-1"
+                  type="button"
+                  aria-expanded="false"
+                >
+                  <span class="sr-only">Open main menu</span
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                    class="block h-6 w-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <header class="bg-white shadow">
+          <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold leading-tight text-gray-900">
+              Peer Connection Explainer
+            </h1>
+          </div>
+        </header>
+        <main>
+          <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+              <h2
+                class="text-2xl font-bold tracking-tight text-indigo-600 mb-8"
+              >
+                Please enter your local and remote description below to get
+                started ...
+              </h2>
+              <div class="flex">
+                <div class="w-1/2 p-4">
+                  <label
+                    for="comment"
+                    class="block text-sm font-medium text-gray-700"
+                    >Local description</label
+                  >
+                  <div class="mt-1">
+                    <textarea
+                      rows="4"
+                      id="localDescription"
+                      class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="w-1/2 p-4">
+                  <label
+                    for="comment"
+                    class="block text-sm font-medium text-gray-700"
+                    >Remote description</label
+                  >
+                  <div class="mt-1">
+                    <textarea
+                      id="remoteDescription"
+                      rows="4"
+                      class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="justify-end flex pr-10 pt-4">
+                <button
+                  onclick="parse()"
+                  type="button"
+                  class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
+                >
+                  Parse
+                </button>
+              </div>
+            </div>
+            <div class="bg-white mt-4 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+              <p class="text-3xl pb-4">Results</p>
+              <ul class="pl-8 list-disc">
+                <li>
+                  <span class="text-2xl"> Errors </span>
+                  <ul id="errorList" class="pl-8 list-disc"></ul>
+                </li>
+                <li>
+                  <span class="text-2xl"> Suggestions </span>
+                  <ul id="suggestionList" class="pl-8 list-disc"></ul>
+                </li>
+                <li>
+                  <span class="text-2xl"> Warnings </span>
+                  <ul id="warningList" class="pl-8 list-disc"></ul>
+                </li>
+              </ul>
+            </div>
+            <div
+              class="bg-white mt-4 py-8 px-4 shadow sm:rounded-lg sm:px-10 flex"
+            >
+              <div class="w-1/2 p-4">
+                <label
+                  for="comment"
+                  class="block text-sm font-medium text-gray-700"
+                  >Parsed local description</label
+                >
+                <div class="mt-1">
+                  <textarea
+                    id="parsedLocalDescription"
+                    rows="8"
+                    class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="w-1/2 p-4">
+                <label
+                  for="comment"
+                  class="block text-sm font-medium text-gray-700"
+                  >Parsed remote description</label
+                >
+                <div class="mt-1">
+                  <textarea
+                    id="parsedRemoteDescription"
+                    rows="8"
+                    class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
