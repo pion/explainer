@@ -15,13 +15,13 @@
         color: white;
       }
 
-      #header span {
+      #header > span {
         transform: translateY(100%);
         padding-left: 1em;
         position: absolute;
       }
 
-      #header img {
+      #header > img {
         padding-top: 5px;
         height: 40px;
       }
@@ -53,6 +53,19 @@
         accent-color: #E53935;
       }
 
+      #explainer-output > div {
+        width: 50%;
+      }
+
+      .session-description-container {
+        border-radius: 5px;
+        border-style: solid;
+        border-width: thin;
+        padding: 0 1em 0 1em;
+        overflow: auto;
+        white-space: nowrap;
+      }
+
       #footer {
         bottom: 0px;
         background-color: lightgray;
@@ -61,7 +74,7 @@
         padding: .25em 10% .25em 10%;
       }
 
-      #footer div {
+      #footer > div {
         flex: 1;
       }
     </style>
@@ -76,16 +89,31 @@
     <div id="explainer-input">
       <div id="local-description-div">
         Local: <input type="checkbox" checked="true" /> <br>
-        <textarea placeholder="Paste your SDP here to begin ..."></textarea>
+        <textarea placeholder="Paste your Session Description, SessionDescriptionInit or base64 here to begin ..."></textarea>
       </div>
 
       <div id="remote-description-div">
         Remote: <input type="checkbox" checked="true"/> <br>
-        <textarea placeholder="Paste your SDP here to begin ..."></textarea>
+        <textarea placeholder="Paste your Session Description, SessionDescriptionInit or base64 here to begin ..."></textarea>
       </div>
     </div>
 
     <div id="explainer-output" style="display: none">
+      <div id="summary-container">
+        <h3> Summary: </h3>
+      </div>
+
+      <div>
+        <div id="parsed-remote-session-description" style="display: none">
+          <h3> Parsed Remote Session Description </h3>
+          <div class="session-description-container"></div>
+        </div>
+
+        <div id="parsed-local-session-description" style="display: none">
+          <h3> Parsed Local Session Description </h3>
+          <div class="session-description-container"></div>
+        </div>
+      </div>
     </div>
 
     <div id="footer" class="full-width">
@@ -98,9 +126,42 @@
 
   <script src="wasm_exec.js"> </script>
   <script>
+    let renderDescription = (el, val) => {
+      if (val === '') {
+        return
+      }
+
+      el.style.display = 'block'
+      const sdpContainer = el.querySelector('.session-description-container')
+      val.split("\n").forEach((line, i) => {
+        sdpContainer.innerHTML += `<div> ${line} </div>`
+      })
+    }
+
+
     let renderOutput = (results, localDescription, remoteDescription) => {
       document.querySelector('#explainer-input').style.display = 'none'
-      document.querySelector('#explainer-output').style.display = 'block'
+      document.querySelector('#explainer-output').style.display = 'flex'
+
+      renderDescription(document.querySelector('#parsed-local-session-description'), localDescription)
+      renderDescription(document.querySelector('#parsed-remote-session-description'), remoteDescription)
+
+      let el = document.querySelector('#summary-container')
+      for (const [key, value] of Object.entries(results)) {
+        el.innerHTML += `<h4> ${key} </h4> <ul>`
+        if (Array.isArray(value)) {
+          value.forEach(v => {
+            if (v.source.length !== 0) {
+              el.innerHTML += `<li> <a href="#" onclick=toggleSource('${JSON.stringify(v.source)}'); event.preventDefault();> ${v.message} </a> </li>`
+            } else {
+              el.innerHTML += `<li> ${v.message} </li>`
+            }
+          })
+        } else {
+
+        }
+        el.innerHTML += `</ul>`
+      }
     }
 
     let wasm, memoryOffset
@@ -113,11 +174,11 @@
         return
       }
 
-      const localDescription = document.querySelector('#local-description-div textarea')
-      const remoteDescription = document.querySelector('#remote-description-div textarea')
-      if (document.querySelector('#remote-description-div input').checked && remoteDescription.value.length === 0) {
+      const localDescription = document.querySelector('#local-description-div textarea').value
+      const remoteDescription = document.querySelector('#remote-description-div textarea').value
+      if (document.querySelector('#remote-description-div input').checked && remoteDescription.length === 0) {
         return
-      } else if (document.querySelector('#local-description-div input').checked && localDescription.value.length === 0) {
+      } else if (document.querySelector('#local-description-div input').checked && localDescription.length === 0) {
         return
       }
 
