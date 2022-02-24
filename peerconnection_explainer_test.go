@@ -1,3 +1,4 @@
+//go:build !js && !wasm
 // +build !js,!wasm
 
 package explainer
@@ -26,7 +27,7 @@ func Test_InputHeuristics(t *testing.T) {
 
 		explained := pe.Explain()
 
-		require.Equal(t, 0, len(explained.Errors))
+		require.Equal(t, 2, len(explained.Errors))
 		require.Equal(t, 0, len(explained.Warnings))
 		require.Equal(t, 0, len(explained.Suggestions))
 	})
