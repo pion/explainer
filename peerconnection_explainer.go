@@ -84,15 +84,23 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 
 	if pe.localDescription.SDP != "" {
 		if m := parsed.Unmarshal(pe.localDescription.SDP); m.Message != "" {
-			m.Sources[0].Type = "local"
+			m.Sources[0].Type = output.SourceTypeLocal
 			result.Errors = append(result.Errors, m)
+		} else {
+			errors := result.LocalDetails.Populate(parsed)
+			setSourcesType(errors, output.SourceTypeLocal)
+			result.Errors = append(result.Errors, errors...)
 		}
 	}
 
 	if pe.remoteDescription.SDP != "" {
 		if m := parsed.Unmarshal(pe.localDescription.SDP); m.Message != "" {
-			m.Sources[0].Type = "remote"
+			m.Sources[0].Type = output.SourceTypeRemote
 			result.Errors = append(result.Errors, m)
+		} else {
+			errors := result.LocalDetails.Populate(parsed)
+			setSourcesType(errors, output.SourceTypeRemote)
+			result.Errors = append(result.Errors, errors...)
 		}
 	}
 

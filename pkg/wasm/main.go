@@ -1,7 +1,6 @@
 package main
 
 import (
-	jwriter "github.com/CosmWasm/tinyjson/jwriter"
 	"github.com/pion/explainer"
 )
 
@@ -54,13 +53,13 @@ func SetRemoteDescription(length int) { //nolint: deadcode, unused, golint
 func Explain() int { //nolint: deadcode, unused
 	maybeInitExplainer()
 
-	w := jwriter.Writer{}
-	tinyjsonA669327EncodeGithubComPionExplainer1(&w, peerConnectionExplainer.Explain())
-	if w.Error != nil {
+	result := peerConnectionExplainer.Explain()
+	json, err := result.MarshalJSON()
+	if err != nil {
 		return 0
 	}
 
-	return copy(buffer[:], w.Buffer.BuildBytes())
+	return copy(buffer[:], json)
 }
 
 // GetLocalDescription returns the current SDP we are using from SetLocalDescription

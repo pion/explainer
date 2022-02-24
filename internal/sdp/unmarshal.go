@@ -57,7 +57,7 @@ func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	case key != "o":
 		return scanner.messageForLine(errOriginatorNotFound)
 	}
-	s.Origin = value
+	s.Origin = ValueWithLine{value, scanner.currentLine}
 
 	// s=
 	key, value, scanStatus, m = scanner.nextLine()
@@ -70,7 +70,7 @@ func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	case key != "s":
 		return scanner.messageForLine(errSessionNameNotFound)
 	}
-	s.SessionName = value
+	s.SessionName = ValueWithLine{value, scanner.currentLine}
 
 	return s.unmarshalOptionalAttributes(scanner)
 }
@@ -106,27 +106,27 @@ func (s *SessionDescription) unmarshalOptionalAttributes(scanner *sdpScanner) ou
 
 		switch key {
 		case "i":
-			s.SessionInformation = value
+			s.SessionInformation = ValueWithLine{value, scanner.currentLine}
 		case "u":
-			s.URI = value
+			s.URI = ValueWithLine{value, scanner.currentLine}
 		case "e":
-			s.EmailAddress = value
+			s.EmailAddress = ValueWithLine{value, scanner.currentLine}
 		case "p":
-			s.PhoneNumber = value
+			s.PhoneNumber = ValueWithLine{value, scanner.currentLine}
 		case "c":
-			s.ConnectionData = value
+			s.ConnectionData = ValueWithLine{value, scanner.currentLine}
 		case "b":
-			s.Bandwidth = append(s.Bandwidth, value)
+			s.Bandwidth = append(s.Bandwidth, ValueWithLine{value, scanner.currentLine})
 		case "t":
-			s.Timing = append(s.Timing, value)
+			s.Timing = append(s.Timing, ValueWithLine{value, scanner.currentLine})
 		case "r":
-			s.RepeatTimes = append(s.RepeatTimes, value)
+			s.RepeatTimes = append(s.RepeatTimes, ValueWithLine{value, scanner.currentLine})
 		case "z":
-			s.TimeZones = append(s.TimeZones, value)
+			s.TimeZones = append(s.TimeZones, ValueWithLine{value, scanner.currentLine})
 		case "k":
-			s.EncryptionKeys = append(s.EncryptionKeys, value)
+			s.EncryptionKeys = append(s.EncryptionKeys, ValueWithLine{value, scanner.currentLine})
 		case "a":
-			s.Attributes = append(s.Attributes, value)
+			s.Attributes = append(s.Attributes, ValueWithLine{value, scanner.currentLine})
 		case "m":
 			return s.unmarshalMedias(scanner, value)
 		default:
@@ -136,7 +136,7 @@ func (s *SessionDescription) unmarshalOptionalAttributes(scanner *sdpScanner) ou
 }
 
 func (s *SessionDescription) unmarshalMedias(scanner *sdpScanner, firstMediaName string) output.Message {
-	currentMedia := &MediaDescription{MediaName: firstMediaName}
+	currentMedia := &MediaDescription{MediaName: ValueWithLine{firstMediaName, scanner.currentLine}}
 	orderedMediaAttributes := []*attributeStatus{
 		{value: "i"},
 		{value: "c"},
@@ -165,17 +165,17 @@ func (s *SessionDescription) unmarshalMedias(scanner *sdpScanner, firstMediaName
 		case "m":
 			s.MediaDescriptions = append(s.MediaDescriptions, currentMedia)
 			resetMediaAttributes()
-			currentMedia = &MediaDescription{MediaName: value}
+			currentMedia = &MediaDescription{MediaName: ValueWithLine{value, scanner.currentLine}}
 		case "i":
-			currentMedia.MediaInformation = value
+			currentMedia.MediaInformation = ValueWithLine{value, scanner.currentLine}
 		case "c":
-			currentMedia.ConnectionData = value
+			currentMedia.ConnectionData = ValueWithLine{value, scanner.currentLine}
 		case "b":
-			currentMedia.Bandwidth = append(currentMedia.Bandwidth, value)
+			currentMedia.Bandwidth = append(currentMedia.Bandwidth, ValueWithLine{value, scanner.currentLine})
 		case "k":
-			currentMedia.EncryptionKeys = append(currentMedia.EncryptionKeys, value)
+			currentMedia.EncryptionKeys = append(currentMedia.EncryptionKeys, ValueWithLine{value, scanner.currentLine})
 		case "a":
-			currentMedia.Attributes = append(currentMedia.Attributes, value)
+			currentMedia.Attributes = append(currentMedia.Attributes, ValueWithLine{value, scanner.currentLine})
 		default:
 			return scanner.messageForLine("Invalid media attribute: " + key)
 		}
