@@ -231,8 +231,9 @@
       wasmMemory().set((new TextEncoder().encode(localDescription)), memoryOffset)
       wasm.exports.SetLocalDescription(localDescription.length)
 
+      let explainResult = wasm.exports.Explain()
       renderOutput(
-        JSON.parse(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.Explain()))),
+        JSON.parse(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + explainResult))),
         new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.GetLocalDescription())),
         new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.GetRemoteDescription()))
       )
