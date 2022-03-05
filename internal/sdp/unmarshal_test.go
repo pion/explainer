@@ -7,20 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const minimalSessionDescription = `v=0
-o=- 0 0 IN IP4 127.0.0.1
-s=-
-c=IN IP4 127.0.0.1
-t=0 0`
-
-const miminalMediaSection = `m=audio 4000 RTP/AVP 111
-a=rtpmap:111 OPUS/48000/2`
-
-// func Test_Unmarshal(t *testing.T) {
-// 	s := SessionDescription{}
-// 	require.NoError(t, s.Unmarshal(minimalSessionDescription))
-// }
-//
 // Assert that we have v, o, s
 func Test_GlobalValues(t *testing.T) {
 	s := SessionDescription{}

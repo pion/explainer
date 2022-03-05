@@ -1,3 +1,4 @@
+// Package result contains the structured data returned to callers
 package result
 
 var (

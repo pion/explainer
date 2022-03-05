@@ -77,6 +77,7 @@ func TestPeerDetailsICE(t *testing.T) {
 			[]output.Message{},
 		},
 	} {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			p := PeerDetails{}
 			messages := p.Populate(test.sdp)
