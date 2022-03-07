@@ -1,6 +1,7 @@
 package result
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/pion/explainer/internal/sdp"
@@ -16,8 +17,11 @@ type PeerDetails struct {
 }
 
 const (
-	attributeIceUsernameFragment = "ice-ufrag:"
-	attributeIcePassword         = "ice-pwd:"
+	// https://datatracker.ietf.org/doc/html/rfc5245#section-15.4
+	attributeIceUsernameFragment          = "ice-ufrag:"
+	attributeIceUsernameFragmentMinLength = 4
+	attributeIcePassword                  = "ice-pwd:"
+	attributeIcePasswordMinLength         = 22
 )
 
 func allValuesEqual(vals []sdp.ValueWithLine) bool {
@@ -39,33 +43,62 @@ func sdpLinesToSources(values []sdp.ValueWithLine) (outputs []output.Source) {
 	return
 }
 
+// ice-char = ALPHA / DIGIT / "+" / "/"
+// https://datatracker.ietf.org/doc/html/rfc5245#section-15.1
+func isValidIceCharString(iceChar string) bool {
+	match, err := regexp.MatchString("^[a-zA-Z0-9+/]*$", iceChar)
+	return err == nil && match
+}
+
 // Populate takes a SessionDescription and populates the PeerDetails
 func (p *PeerDetails) Populate(s *sdp.SessionDescription) []output.Message {
 	msgs := []output.Message{}
 
-	iceUfrags := s.ScanForAttribute(attributeIceUsernameFragment, true, true)
-	switch {
-	case len(iceUfrags) == 0:
-		msgs = append(msgs, output.Message{Message: errNoIceUserFragment})
-	case !allValuesEqual(iceUfrags):
-		msgs = append(msgs, output.Message{Message: errConflictingIceUserFragment, Sources: sdpLinesToSources(iceUfrags)})
-	default:
-		p.IceUsernameFragment = output.Message{
-			Message: strings.TrimPrefix(iceUfrags[0].Value, attributeIceUsernameFragment),
-			Sources: sdpLinesToSources(iceUfrags),
+	{
+		iceUfrags := s.ScanForAttribute(attributeIceUsernameFragment, true, true)
+		trimmedValue := ""
+		if len(iceUfrags) != 0 {
+			trimmedValue = strings.TrimPrefix(iceUfrags[0].Value, attributeIceUsernameFragment)
+		}
+
+		switch {
+		case trimmedValue == "":
+			msgs = append(msgs, output.Message{Message: errNoIceUserFragment})
+		case !allValuesEqual(iceUfrags):
+			msgs = append(msgs, output.Message{Message: errConflictingIceUserFragment, Sources: sdpLinesToSources(iceUfrags)})
+		case !isValidIceCharString(trimmedValue):
+			msgs = append(msgs, output.Message{Message: errInvalidIceUserFragment, Sources: sdpLinesToSources(iceUfrags)})
+		case len(trimmedValue) < attributeIceUsernameFragmentMinLength:
+			msgs = append(msgs, output.Message{Message: errShortIceUserFragment, Sources: sdpLinesToSources(iceUfrags)})
+		default:
+			p.IceUsernameFragment = output.Message{
+				Message: trimmedValue,
+				Sources: sdpLinesToSources(iceUfrags),
+			}
 		}
 	}
 
-	icePasswords := s.ScanForAttribute(attributeIcePassword, true, true)
-	switch {
-	case len(icePasswords) == 0:
-		msgs = append(msgs, output.Message{Message: errNoIcePassword})
-	case !allValuesEqual(iceUfrags):
-		msgs = append(msgs, output.Message{Message: errConflictingIcePassward, Sources: sdpLinesToSources(iceUfrags)})
-	default:
-		p.IcePassword = output.Message{
-			Message: strings.TrimPrefix(icePasswords[0].Value, attributeIcePassword),
-			Sources: sdpLinesToSources(icePasswords),
+	{
+		icePasswords := s.ScanForAttribute(attributeIcePassword, true, true)
+		trimmedValue := ""
+		if len(icePasswords) != 0 {
+			trimmedValue = strings.TrimPrefix(icePasswords[0].Value, attributeIcePassword)
+		}
+
+		switch {
+		case trimmedValue == "":
+			msgs = append(msgs, output.Message{Message: errNoIcePassword})
+		case !allValuesEqual(icePasswords):
+			msgs = append(msgs, output.Message{Message: errConflictingIcePassword, Sources: sdpLinesToSources(icePasswords)})
+		case !isValidIceCharString(trimmedValue):
+			msgs = append(msgs, output.Message{Message: errInvalidIcePassword, Sources: sdpLinesToSources(icePasswords)})
+		case len(trimmedValue) < attributeIcePasswordMinLength:
+			msgs = append(msgs, output.Message{Message: errShortIcePassword, Sources: sdpLinesToSources(icePasswords)})
+		default:
+			p.IcePassword = output.Message{
+				Message: trimmedValue,
+				Sources: sdpLinesToSources(icePasswords),
+			}
 		}
 	}
 

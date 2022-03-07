@@ -28,19 +28,19 @@ func TestPeerDetailsICE(t *testing.T) {
 			"Single ICE Value",
 			&sdp.SessionDescription{
 				Attributes: []sdp.ValueWithLine{
-					{Value: attributeIceUsernameFragment + "foo", Line: 5},
-					{Value: attributeIcePassword + "bar", Line: 7},
+					{Value: attributeIceUsernameFragment + "ABCD", Line: 5},
+					{Value: attributeIcePassword + "ABCDEFGHIJKLMNOPQRSTUV", Line: 7},
 				},
 			},
 			PeerDetails{
 				IceUsernameFragment: output.Message{
-					Message: "foo",
+					Message: "ABCD",
 					Sources: []output.Source{
 						{Line: 5},
 					},
 				},
 				IcePassword: output.Message{
-					Message: "bar",
+					Message: "ABCDEFGHIJKLMNOPQRSTUV",
 					Sources: []output.Source{
 						{Line: 7},
 					},
@@ -52,22 +52,22 @@ func TestPeerDetailsICE(t *testing.T) {
 			"Duplicate non-conflicting ICE Value",
 			&sdp.SessionDescription{
 				Attributes: []sdp.ValueWithLine{
-					{Value: attributeIceUsernameFragment + "foo", Line: 5},
-					{Value: attributeIceUsernameFragment + "foo", Line: 6},
-					{Value: attributeIcePassword + "bar", Line: 7},
-					{Value: attributeIcePassword + "bar", Line: 8},
+					{Value: attributeIceUsernameFragment + "ABCD", Line: 5},
+					{Value: attributeIceUsernameFragment + "ABCD", Line: 6},
+					{Value: attributeIcePassword + "ABCDEFGHIJKLMNOPQRSTUV", Line: 7},
+					{Value: attributeIcePassword + "ABCDEFGHIJKLMNOPQRSTUV", Line: 8},
 				},
 			},
 			PeerDetails{
 				IceUsernameFragment: output.Message{
-					Message: "foo",
+					Message: "ABCD",
 					Sources: []output.Source{
 						{Line: 5},
 						{Line: 6},
 					},
 				},
 				IcePassword: output.Message{
-					Message: "bar",
+					Message: "ABCDEFGHIJKLMNOPQRSTUV",
 					Sources: []output.Source{
 						{Line: 7},
 						{Line: 8},
@@ -75,6 +75,82 @@ func TestPeerDetailsICE(t *testing.T) {
 				},
 			},
 			[]output.Message{},
+		},
+		{
+			"Duplicate conflicting ICE Value",
+			&sdp.SessionDescription{
+				Attributes: []sdp.ValueWithLine{
+					{Value: attributeIceUsernameFragment + "foo", Line: 5},
+					{Value: attributeIceUsernameFragment + "bar", Line: 6},
+					{Value: attributeIcePassword + "foo", Line: 7},
+					{Value: attributeIcePassword + "bar", Line: 8},
+				},
+			},
+			PeerDetails{},
+			[]output.Message{
+				{
+					Message: errConflictingIceUserFragment,
+					Sources: []output.Source{
+						{Line: 5},
+						{Line: 6},
+					},
+				},
+				{
+					Message: errConflictingIcePassword,
+					Sources: []output.Source{
+						{Line: 7},
+						{Line: 8},
+					},
+				},
+			},
+		},
+		{
+			"Invalid Characters",
+			&sdp.SessionDescription{
+				Attributes: []sdp.ValueWithLine{
+					{Value: attributeIceUsernameFragment + "foo!", Line: 5},
+					{Value: attributeIcePassword + "bar-", Line: 8},
+				},
+			},
+			PeerDetails{},
+			[]output.Message{
+				{
+					Message: errInvalidIceUserFragment,
+					Sources: []output.Source{
+						{Line: 5},
+					},
+				},
+				{
+					Message: errInvalidIcePassword,
+					Sources: []output.Source{
+						{Line: 8},
+					},
+				},
+			},
+		},
+		{
+			"Length Min",
+			&sdp.SessionDescription{
+				Attributes: []sdp.ValueWithLine{
+					{Value: attributeIceUsernameFragment + "foo", Line: 5},
+					{Value: attributeIcePassword + "bar", Line: 8},
+				},
+			},
+			PeerDetails{},
+			[]output.Message{
+				{
+					Message: errShortIceUserFragment,
+					Sources: []output.Source{
+						{Line: 5},
+					},
+				},
+				{
+					Message: errShortIcePassword,
+					Sources: []output.Source{
+						{Line: 8},
+					},
+				},
+			},
 		},
 	} {
 		test := test

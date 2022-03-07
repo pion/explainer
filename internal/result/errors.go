@@ -4,6 +4,11 @@ package result
 var (
 	errNoIceUserFragment          = "No ICE Username Fragment Found"
 	errConflictingIceUserFragment = "Conflicting ICE Username Fragments Found"
-	errNoIcePassword              = "No ICE Password Found"
-	errConflictingIcePassward     = "Conflicting ICE Password Found"
+	errInvalidIceUserFragment     = "ICE User Fragment Found, but is invalid value"
+	errShortIceUserFragment       = "ICE User Fragment Found, but is not long enough"
+
+	errNoIcePassword          = "No ICE Password Found"
+	errConflictingIcePassword = "Conflicting ICE Password Found"
+	errInvalidIcePassword     = "ICE Password Found, but is invalid value"
+	errShortIcePassword       = "ICE Password Found, but is not long enough"
 )
