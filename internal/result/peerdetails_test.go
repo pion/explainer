@@ -8,13 +8,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testRun struct {
+	name        string
+	sdp         *sdp.SessionDescription
+	peerDetails PeerDetails
+	messages    []output.Message
+}
+
+func runPeerDetailsTest(t *testing.T, tests []testRun) {
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			p := PeerDetails{}
+			messages := p.Populate(test.sdp)
+
+			require.Equal(t, p, test.peerDetails)
+			require.Subset(t, messages, test.messages)
+		})
+	}
+}
+
 func TestPeerDetailsICE(t *testing.T) {
-	for _, test := range []struct {
-		name        string
-		sdp         *sdp.SessionDescription
-		peerDetails PeerDetails
-		messages    []output.Message
-	}{
+	runPeerDetailsTest(t, []testRun{
 		{
 			"No ICE Values",
 			&sdp.SessionDescription{},
@@ -152,14 +167,71 @@ func TestPeerDetailsICE(t *testing.T) {
 				},
 			},
 		},
-	} {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			p := PeerDetails{}
-			messages := p.Populate(test.sdp)
+	})
+}
 
-			require.Equal(t, p, test.peerDetails)
-			require.Equal(t, messages, test.messages)
-		})
-	}
+func TestPeerDetailsCertificateFingerprint(t *testing.T) {
+	runPeerDetailsTest(t, []testRun{
+		{
+			"No Fingerprint",
+			&sdp.SessionDescription{},
+			PeerDetails{},
+			[]output.Message{
+				{Message: errNoCertificateFingerprint},
+			},
+		},
+		{
+			"Conflicting Fingerprint",
+			&sdp.SessionDescription{
+				Attributes: []sdp.ValueWithLine{
+					{Value: attributeCertificateFingerprint + "foo", Line: 5},
+					{Value: attributeCertificateFingerprint + "bar", Line: 6},
+				},
+			},
+			PeerDetails{},
+			[]output.Message{
+				{
+					Message: errConflictingCertificateFingerprints,
+					Sources: []output.Source{
+						{Line: 5},
+						{Line: 6},
+					},
+				},
+			},
+		},
+		{
+			"Single value",
+			&sdp.SessionDescription{
+				Attributes: []sdp.ValueWithLine{
+					{Value: attributeCertificateFingerprint + "invalid", Line: 5},
+				},
+			},
+			PeerDetails{},
+			[]output.Message{
+				{
+					Message: errMissingSeperatorCertificateFingerprint,
+					Sources: []output.Source{
+						{Line: 5},
+					},
+				},
+			},
+		},
+		{
+			"Two value, second not a hex",
+			&sdp.SessionDescription{
+				Attributes: []sdp.ValueWithLine{
+					{Value: attributeCertificateFingerprint + "invalid invalid", Line: 5},
+				},
+			},
+			PeerDetails{},
+			[]output.Message{
+				{
+					Message: errInvalidHexCertificateFingerprint,
+					Sources: []output.Source{
+						{Line: 5},
+					},
+				},
+			},
+		},
+	})
 }
