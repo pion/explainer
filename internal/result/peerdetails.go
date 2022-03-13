@@ -1,8 +1,6 @@
 package result
 
 import (
-	"encoding/hex"
-	"regexp"
 	"strings"
 
 	"github.com/pion/explainer/internal/sdp"
@@ -52,21 +50,39 @@ func sdpLinesToSources(values []sdp.ValueWithLine) (outputs []output.Source) {
 // ice-char = ALPHA / DIGIT / "+" / "/"
 // https://datatracker.ietf.org/doc/html/rfc5245#section-15.1
 func isValidIceCharString(iceChar string) bool {
-	match, err := regexp.MatchString("^[a-zA-Z0-9+/]*$", iceChar)
-	return err == nil && match
+	for _, c := range iceChar {
+		switch {
+		case c >= '0' && c <= '9':
+		case c >= 'A' && c <= 'Z':
+		case c >= 'a' && c <= 'z':
+		case c == '+' || c == '/':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // https://datatracker.ietf.org/doc/html/rfc4572#section-5
-// a=fingerprint:sha-256 0F:74:31:25:CB:A2:13:EC:28:6F:6D:2C:61:FF:5D:C2:BC:B9:DB:3D:98:14:8D:1A:BB:EA:33:0C:A4:60:A8:8E
 func isValidCertificateFingerprint(fingerprint string) string {
 	spaceSplit := strings.Split(fingerprint, " ")
 	if len(spaceSplit) != 2 {
 		return errMissingSeperatorCertificateFingerprint
 	}
 
-	for _, v := range strings.Split(fingerprint, ":") {
-		if _, err := hex.DecodeString(v); err != nil {
+	for _, v := range strings.Split(spaceSplit[1], ":") {
+		if len(v) != 2 {
 			return errInvalidHexCertificateFingerprint
+		}
+
+		for _, c := range v {
+			switch {
+			case c >= '0' && c <= '9':
+			case c >= 'A' && c <= 'F':
+			case c >= 'a' && c <= 'f':
+			default:
+				return errInvalidHexCertificateFingerprint
+			}
 		}
 	}
 

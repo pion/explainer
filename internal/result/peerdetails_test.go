@@ -200,16 +200,16 @@ func TestPeerDetailsCertificateFingerprint(t *testing.T) {
 			},
 		},
 		{
-			"Single value",
+			"Two value, second not a split",
 			&sdp.SessionDescription{
 				Attributes: []sdp.ValueWithLine{
-					{Value: attributeCertificateFingerprint + "invalid", Line: 5},
+					{Value: attributeCertificateFingerprint + "invalid in:va:li:d", Line: 5},
 				},
 			},
 			PeerDetails{},
 			[]output.Message{
 				{
-					Message: errMissingSeperatorCertificateFingerprint,
+					Message: errInvalidHexCertificateFingerprint,
 					Sources: []output.Source{
 						{Line: 5},
 					},
@@ -220,7 +220,7 @@ func TestPeerDetailsCertificateFingerprint(t *testing.T) {
 			"Two value, second not a hex",
 			&sdp.SessionDescription{
 				Attributes: []sdp.ValueWithLine{
-					{Value: attributeCertificateFingerprint + "invalid invalid", Line: 5},
+					{Value: attributeCertificateFingerprint + "invalid in:va:li:dd", Line: 5},
 				},
 			},
 			PeerDetails{},
