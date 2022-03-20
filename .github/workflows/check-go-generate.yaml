@@ -1,0 +1,36 @@
+name: Check Go Generate
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-go@v3
+
+      - run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go get -u github.com/moznion/go-json-ice/cmd/json-ice
+          go get -u golang.org/x/tools/cmd/goimports
+          git checkout go.mod go.sum
+          go generate ./...
+
+      - run:   echo ::set-output name=WC::$(git status --porcelain | wc -l)
+        shell: bash
+        id: git_status
+
+      - name: Fail if `go generate ./...` causes changes to be generated
+        run: exit 1
+        if:  steps.git_status.outputs.WC != '0'
