@@ -185,6 +185,10 @@
 
       let el = document.querySelector('#summary-container')
       for (const [key, value] of Object.entries(results)) {
+        if (value.length === 0 || Object.keys(value).length === 0) {
+          continue
+        }
+
         el.innerHTML += `<h4> ${key} </h4> <ul>`
         if (Array.isArray(value)) {
           value.forEach(v => {
@@ -202,7 +206,6 @@
             }
           })
         } else {
-
         }
         el.innerHTML += `</ul>`
       }
