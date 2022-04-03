@@ -26,6 +26,7 @@ func (s *sdpScanner) messageForError(err error) output.Message {
 }
 
 func (s *sdpScanner) nextLine() (key, value string, scanStatus bool, message output.Message) {
+	s.currentLine++
 	if scanStatus = s.scanner.Scan(); !scanStatus {
 		return key, value, scanStatus, s.messageForError(s.scanner.Err())
 	}
@@ -36,7 +37,6 @@ func (s *sdpScanner) nextLine() (key, value string, scanStatus bool, message out
 		return key, value, scanStatus, s.messageForLine(errInvalidLine)
 	}
 
-	s.currentLine++
 	return string(s.scanner.Text()[0]), s.scanner.Text()[2:], scanStatus, output.Message{}
 }
 

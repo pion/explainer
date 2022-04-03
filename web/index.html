@@ -176,6 +176,16 @@
       })
     }
 
+    function generateSourceCssTag(key) {
+      let tag = 'check'
+      if (key.match(/error/i)) {
+        tag = 'error'
+      } else if (key.match(/warning/i)) {
+        tag = 'warning'
+      }
+      return tag
+    }
+
     function renderOutput(results, localDescription, remoteDescription){
       document.querySelector('#explainer-input').style.display = 'none'
       document.querySelector('#explainer-output').style.display = 'flex'
@@ -193,13 +203,7 @@
         if (Array.isArray(value)) {
           value.forEach(v => {
             if (v.source.length !== 0) {
-              let tag = 'check'
-              if (key.match(/error/i)) {
-                tag = 'error'
-              } else if (key.match(/warning/i)) {
-                tag = 'warning'
-              }
-              v.source.unshift(tag)
+              v.source.unshift(generateSourceCssTag(key))
               el.innerHTML += `<li> <a href="#" onclick=toggleLine(JSON.parse('${JSON.stringify(v.source)}')); event.preventDefault();> ${v.message} </a> </li>`
             } else {
               el.innerHTML += `<li> ${v.message} </li>`

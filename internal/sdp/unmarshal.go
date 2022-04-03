@@ -32,7 +32,7 @@ import (
 // https://tools.ietf.org/html/rfc4566#section-5
 func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	s.Reset()
-	scanner := &sdpScanner{bufio.NewScanner(strings.NewReader(raw)), 0}
+	scanner := &sdpScanner{bufio.NewScanner(strings.NewReader(raw)), -1}
 	var err error
 
 	// v=
