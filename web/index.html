@@ -58,6 +58,12 @@
 
       #explainer-output > div {
         width: 50%;
+        margin: 1em;
+      }
+
+      #summary-container, .session-description-container {
+        overflow: auto;
+        white-space: nowrap;
       }
 
       .session-description-container {
@@ -65,8 +71,6 @@
         border-style: solid;
         border-width: thin;
         padding-right: 1em;
-        overflow: auto;
-        white-space: nowrap;
       }
 
       .session-description-container > div {
@@ -176,14 +180,28 @@
       })
     }
 
-    function generateSourceCssTag(key) {
-      let tag = 'check'
-      if (key.match(/error/i)) {
-        tag = 'error'
-      } else if (key.match(/warning/i)) {
-        tag = 'warning'
+    function renderLine (key, value, lineCssTag) {
+      let output = "<li>"
+      if (key !== '') {
+        output += `<b> ${key} </b> -`
       }
-      return tag
+
+      if (Array.isArray(value)) {
+        return ''
+      } else {
+        if (value === null || value.message === '' || value.source == null) {
+          return ''
+        }
+
+        if (value.source.length !== 0) {
+          value.source.unshift(lineCssTag)
+          output += `<a href="#" onclick=toggleLine(JSON.parse('${JSON.stringify(value.source)}')); event.preventDefault();> ${value.message} </a>`
+        } else {
+          output += `${value.message}`
+        }
+      }
+
+      return `${output} </li>`
     }
 
     function renderOutput(results, localDescription, remoteDescription){
@@ -195,23 +213,29 @@
 
       let el = document.querySelector('#summary-container')
       for (const [key, value] of Object.entries(results)) {
-        if (value.length === 0 || Object.keys(value).length === 0) {
+        if (value.length === 0) {
           continue
         }
 
-        el.innerHTML += `<h4> ${key} </h4> <ul>`
+        let output = `<h4> ${key} </h4> <ul>`
         if (Array.isArray(value)) {
+
+          let tag = 'check'
+          if (key.match(/error/i)) {
+            tag = 'error'
+          } else if (key.match(/warning/i)) {
+            tag = 'warning'
+          }
+
           value.forEach(v => {
-            if (v.source.length !== 0) {
-              v.source.unshift(generateSourceCssTag(key))
-              el.innerHTML += `<li> <a href="#" onclick=toggleLine(JSON.parse('${JSON.stringify(v.source)}')); event.preventDefault();> ${v.message} </a> </li>`
-            } else {
-              el.innerHTML += `<li> ${v.message} </li>`
-            }
+            output += renderLine('', v,  tag)
           })
         } else {
+          for (const [k, v] of Object.entries(value)) {
+            output += renderLine(k, v, 'check')
+          }
         }
-        el.innerHTML += `</ul>`
+        el.innerHTML += `${output} </ul>`
       }
     }
 

@@ -30,9 +30,9 @@ func allValuesEqual(vals []sdp.ValueWithLine) bool {
 	return true
 }
 
-func sdpLinesToSources(values []sdp.ValueWithLine) (outputs []output.Source) {
+func sdpLinesToSources(values []sdp.ValueWithLine, sourceType output.SourceType) (outputs []output.Source) {
 	for _, v := range values {
-		outputs = append(outputs, output.Source{Line: v.Line})
+		outputs = append(outputs, output.Source{Line: v.Line, Type: sourceType})
 	}
 	return
 }

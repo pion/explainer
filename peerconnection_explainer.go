@@ -87,7 +87,7 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 			m.Sources[0].Type = output.SourceTypeLocal
 			result.Errors = append(result.Errors, m)
 		} else {
-			errors := result.LocalDetails.Populate(parsed)
+			errors := result.LocalDetails.Populate(parsed, output.SourceTypeLocal)
 			setSourcesType(errors, output.SourceTypeLocal)
 			result.Errors = append(result.Errors, errors...)
 		}
@@ -98,7 +98,7 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 			m.Sources[0].Type = output.SourceTypeRemote
 			result.Errors = append(result.Errors, m)
 		} else {
-			errors := result.LocalDetails.Populate(parsed)
+			errors := result.LocalDetails.Populate(parsed, output.SourceTypeRemote)
 			setSourcesType(errors, output.SourceTypeRemote)
 			result.Errors = append(result.Errors, errors...)
 		}

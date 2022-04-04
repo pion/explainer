@@ -20,7 +20,7 @@ func runPeerDetailsTest(t *testing.T, tests []testRun) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			p := PeerDetails{}
-			messages := p.Populate(test.sdp)
+			messages := p.Populate(test.sdp, 0)
 
 			require.Equal(t, p, test.peerDetails)
 			require.Subset(t, messages, test.messages)
