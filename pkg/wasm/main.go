@@ -4,7 +4,7 @@ import (
 	"github.com/pion/explainer"
 )
 
-//nolint: deadcode, unused, golint
+//nolint: deadcode, unused, revive
 type (
 	Result         = explainer.Result
 	SessionDetails = explainer.SessionDetails

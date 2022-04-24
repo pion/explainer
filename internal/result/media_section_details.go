@@ -7,7 +7,7 @@ import "github.com/pion/explainer/pkg/output"
 //go:generate json-ice --type=MediaSectionDetails
 type MediaSectionDetails struct {
 	// ID is commonly referred to as MID
-	ID output.Message `json:"ID"`
+	ID output.Message `json:"id"`
 
 	// Audio or Video
 	Type output.Message `json:"type"`
