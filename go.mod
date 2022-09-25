@@ -1,6 +1,6 @@
 module github.com/pion/explainer
 
-go 1.15
+go 1.19
 
 require (
 	github.com/moznion/go-json-ice v0.0.3
