@@ -4,3 +4,6 @@
 # This file is auto generated, using git to list all individuals contributors.
 # see https://github.com/pion/.goassets/blob/master/scripts/generate-authors.sh for the scripting
 Sean DuBois <sean@siobud.com>
+
+# List of contributors not appearing in Git history
+
