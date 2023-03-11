@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  Explainer
+  Pion Explainer
   <br>
 </h1>
 <h4 align="center">Explainer decodes WebRTC... so you don't have too!</h4>
