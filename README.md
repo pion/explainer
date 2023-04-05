@@ -22,14 +22,12 @@ what codecs are supported, how many tracks each peer is attempting to send and I
 The goal of this project is to make learning and debugging WebRTC easier.
 
 ### Use Cases
-
 * **Debugging** - Discover common errors without having to read and compare SDP values.
 * **Learning** - Learn SDP keys and values and how they effect your WebRTC sessions.
 * **Passive Monitoring** - Add `Explainer` to your existing Signaling and Media servers. Surface and fix existing issues.
 * **Custom Tooling** - Include `Explainer` with your own UI in an existing project. Make it easier for your customers to use WebRTC.
 
 ### Features
-
 * **Session Description Parsing** - Human readable JSON output explaining your Offer/Answer
 * **Session Description Suggestions** - Searches for errors and possible improvements, not just explaining the current values.
 * **Made for Learning** - Returns line numbers for suggestion and parsing.
@@ -39,13 +37,11 @@ The goal of this project is to make learning and debugging WebRTC easier.
 * **Decoupled** - Easily ship your own UI, `Explainer` can run on clients or servers
 
 #### Future Features
-
 * **getStats Parsing** - Human readable JSON output explaining the status of your PeerConnection. What it is sending and why.
 * **getStats Suggestions** - Understand why a certain bitrate is being sent or why you are seeing video corruption.
 * **getStats Graphing** - Generate values that are easily plottable in your tool of choice.
 
 ### Running
-
 Examples for different languages are in the `examples` directory. A Web UI is provided in the `web` directory.
 
 Each example will have a `README.md` describing its specific setup.
@@ -62,7 +58,7 @@ We are always looking to support **your projects**. Please reach out if you have
 If you need commercial support or don't want to use public methods you can contact us at [team@pion.ly](mailto:team@pion.ly)
 
 ### Contributing
-Check out the **[contributing wiki](https://github.com/pion/webrtc/wiki/Contributing)** to join the group of amazing people making this project possible: [AUTHORS.txt](./AUTHORS.txt)
+Check out the [contributing wiki](https://github.com/pion/webrtc/wiki/Contributing) to join the group of amazing people making this project possible: [AUTHORS.txt](./AUTHORS.txt)
 
 ### License
 MIT License - see [LICENSE](LICENSE) for full text
