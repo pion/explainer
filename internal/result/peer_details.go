@@ -12,6 +12,7 @@ import (
 
 // PeerDetails contains the details published by a single peer. This is what
 // a single peer Offered or Answered
+//
 //go:generate json-ice --type=PeerDetails
 type PeerDetails struct {
 	IceUsernameFragment output.Message `json:"iceUsernameFragment"`

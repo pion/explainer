@@ -17,6 +17,7 @@ type PeerDetails = result.PeerDetails
 type SessionDetails = result.SessionDetails
 
 // Result is the current status of the PeerConnectionExplainer
+//
 //go:generate json-ice --type=Result
 type Result struct {
 	Errors      []output.Message `json:"errors"`
@@ -51,7 +52,7 @@ func setSourcesType(messages []output.Message, sourceType output.SourceType) {
 	}
 }
 
-//nolint golint
+// nolint golint
 var (
 	errLocalAndRemoteSameType = "local and remote description are the same type"
 

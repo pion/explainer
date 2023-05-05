@@ -1,12 +1,14 @@
 // SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
 // SPDX-License-Identifier: MIT
 
+// Package main implements a little CLI example
 package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
 
+	"github.com/disgoorg/log"
 	"github.com/pion/explainer"
 )
 
@@ -23,8 +25,10 @@ func main() {
 
 	results, err := json.MarshalIndent(e.Explain(), "", "  ")
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
-	fmt.Println(string(results))
+	if _, err := os.Stdout.Write(results); err != nil {
+		log.Error(err)
+	}
 }

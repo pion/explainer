@@ -7,6 +7,7 @@ import "github.com/pion/explainer/pkg/output"
 
 // MediaSectionDetails contains the details of
 // a single MediaSection
+//
 //go:generate json-ice --type=MediaSectionDetails
 type MediaSectionDetails struct {
 	// ID is commonly referred to as MID

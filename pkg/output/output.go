@@ -7,6 +7,7 @@ package output
 import "bytes"
 
 // Message contains a string description and the sources that caused it to be generated
+//
 //go:generate json-ice --type=Message
 type Message struct {
 	Message string   `json:"message"`
@@ -28,6 +29,7 @@ func NewMessage(message string, sources []Source) Message {
 }
 
 // Source is the file that caused this message to be generated
+//
 //go:generate json-ice --type=Source
 type Source struct {
 	Type SourceType `json:"type"`
