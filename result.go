@@ -17,8 +17,6 @@ type PeerDetails = result.PeerDetails
 type SessionDetails = result.SessionDetails
 
 // Result is the current status of the PeerConnectionExplainer
-//
-//go:generate json-ice --type=Result
 type Result struct {
 	Errors      []output.Message `json:"errors"`
 	Warnings    []output.Message `json:"warnings"`
@@ -34,11 +32,6 @@ func (r *Result) init() {
 	r.Warnings = make([]output.Message, 0)
 	r.Errors = make([]output.Message, 0)
 	r.Suggestions = make([]output.Message, 0)
-}
-
-// MarshalJSON returns the JSON encoding of this object
-func (r *Result) MarshalJSON() ([]byte, error) {
-	return MarshalResultAsJSON(r)
 }
 
 func setSourcesType(messages []output.Message, sourceType output.SourceType) {
