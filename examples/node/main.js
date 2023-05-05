@@ -1,30 +1,38 @@
 // SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
 // SPDX-License-Identifier: MIT
 
-/* global WebAssembly, TextDecoder, TextEncoder */
-
-require('./wasm_exec.js')
-const go = new global.Go()
-const importObject = go.importObject
-
 const remoteDescription = `{"type": "offer", "sdp": "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=-\r\nc=IN IP4 127.0.0.1\r\nt=0 0\r\nm=audio 4000 RTP/AVP 111\r\na=rtpmap:111 OPUS/48000/2\r\nm=video 4002 RTP/AVP 96\r\na=rtpmap:96 VP8/90000"}`
 const localDescription = `{"type": "answer", "sdp": "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=-\r\nc=IN IP4 127.0.0.1\r\nt=0 0\r\nm=audio 4000 RTP/AVP 111\r\na=rtpmap:111 OPUS/48000/2\r\nm=video 4002 RTP/AVP 96\r\na=rtpmap:96 VP8/90000"}`
 
-WebAssembly.instantiate(require('fs').readFileSync('wasm.wasm'), importObject).then(wasmModule => {
-  go.run(wasmModule.instance)
-  let exports = wasmModule.instance.exports
+globalThis.require = require;
+globalThis.fs = require("fs");
+globalThis.TextEncoder = require("util").TextEncoder;
+globalThis.TextDecoder = require("util").TextDecoder;
 
-  let wasmMemory = () => {
-    return new Uint8Array(exports.memory.buffer)
-  }
-  let memoryOffset = exports.getWasmMemoryBufferOffset()
+globalThis.performance = {
+	now() {
+		const [sec, nsec] = process.hrtime();
+		return sec * 1000 + nsec / 1000000;
+	},
+};
 
-  wasmMemory().set((new TextEncoder().encode(remoteDescription)), memoryOffset)
-  exports.SetRemoteDescription(remoteDescription.length)
+const crypto = require("crypto");
+globalThis.crypto = {
+	getRandomValues(b) {
+		crypto.randomFillSync(b);
+	},
+};
 
-  wasmMemory().set((new TextEncoder().encode(localDescription)), memoryOffset)
-  exports.SetLocalDescription(localDescription.length)
+require("./wasm_exec");
 
-  let explainSize = exports.Explain()
-  console.log(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + explainSize)))
-})
+const go = new Go();
+WebAssembly.instantiate(fs.readFileSync('wasm.wasm'), go.importObject).then((result) => {
+	go.run(result.instance);
+
+  result_str = explain(localDescription, remoteDescription)
+  result = JSON.parse(result_str)
+  console.log(result)
+}).catch((err) => {
+	console.error(err);
+	process.exit(1);
+});

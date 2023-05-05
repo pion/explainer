@@ -10,9 +10,8 @@ You can download the WASM build and `wasm_exec.js` from master build OR build yo
 * `wget https://pe.pion.ly/wasm_exec.js`
 
 ### Build
-* [Install TinyGo](https://tinygo.org/getting-started/install/)
-* Copy wasm_exec - `cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js .`
-* Build - `tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap github.com/pion/explainer/pkg/wasm`
+* Copy `wasm_exec.js`: `cp "$(go env GOROOT)/misc/wasm/wasm_exec_node.js" .`
+* Build - `GOOS=js GOARCH=wasm go build -o wasm.wasm ../../pkg/wasm`
 
 ### Run
 Run `node main.js`
