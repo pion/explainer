@@ -5,6 +5,8 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/pion/explainer"
 )
 
@@ -61,12 +63,12 @@ func Explain() int { //nolint: deadcode, unused
 	maybeInitExplainer()
 
 	result := peerConnectionExplainer.Explain()
-	json, err := result.MarshalJSON()
+	j, err := json.Marshal(result)
 	if err != nil {
 		return 0
 	}
 
-	return copy(buffer[:], json)
+	return copy(buffer[:], j)
 }
 
 // GetLocalDescription returns the current SDP we are using from SetLocalDescription

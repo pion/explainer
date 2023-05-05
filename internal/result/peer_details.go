@@ -12,8 +12,6 @@ import (
 
 // PeerDetails contains the details published by a single peer. This is what
 // a single peer Offered or Answered
-//
-//go:generate json-ice --type=PeerDetails
 type PeerDetails struct {
 	IceUsernameFragment output.Message `json:"iceUsernameFragment"`
 	IcePassword         output.Message `json:"icePassword"`
@@ -108,9 +106,4 @@ func (p *PeerDetails) Populate(s *sdp.SessionDescription, t output.SourceType) [
 	}
 
 	return msgs
-}
-
-// MarshalJSON returns the JSON encoding of this object
-func (p *PeerDetails) MarshalJSON() ([]byte, error) {
-	return MarshalPeerDetailsAsJSON(p)
 }

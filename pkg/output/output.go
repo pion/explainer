@@ -7,16 +7,9 @@ package output
 import "bytes"
 
 // Message contains a string description and the sources that caused it to be generated
-//
-//go:generate json-ice --type=Message
 type Message struct {
 	Message string   `json:"message"`
 	Sources []Source `json:"source"`
-}
-
-// MarshalJSON returns the JSON encoding of this object
-func (m *Message) MarshalJSON() ([]byte, error) {
-	return MarshalMessageAsJSON(m)
 }
 
 // NewMessage creates a Message and handles nil Sources
@@ -29,16 +22,9 @@ func NewMessage(message string, sources []Source) Message {
 }
 
 // Source is the file that caused this message to be generated
-//
-//go:generate json-ice --type=Source
 type Source struct {
 	Type SourceType `json:"type"`
 	Line int        `json:"line"`
-}
-
-// MarshalJSON returns the JSON encoding of this object
-func (s *Source) MarshalJSON() ([]byte, error) {
-	return MarshalSourceAsJSON(s)
 }
 
 // SourceType communicates if the source is from the local or remote description
