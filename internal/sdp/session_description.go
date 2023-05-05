@@ -114,7 +114,7 @@ func (s *SessionDescription) Reset() {
 }
 
 // ScanForAttribute searches for attributes with a given prefix
-func (s *SessionDescription) ScanForAttribute(prefix string, searchGlobal, searchMedia bool) (rtrn []ValueWithLine) {
+func (s *SessionDescription) ScanForAttribute(prefix string, _, _ bool) (rtrn []ValueWithLine) {
 	for _, a := range s.Attributes {
 		if strings.HasPrefix(a.Value, prefix) {
 			rtrn = append(rtrn, a)

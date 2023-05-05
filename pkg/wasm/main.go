@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
 // SPDX-License-Identifier: MIT
 
+// Package main implements a WASM example
 package main
 
 import (
 	"github.com/pion/explainer"
 )
 
-//nolint: deadcode, unused, revive
+// nolint: deadcode, unused, revive
 type (
 	Result         = explainer.Result
 	SessionDetails = explainer.SessionDetails
@@ -18,7 +19,7 @@ const (
 	bufferSize int = 500000
 )
 
-//nolint: unused, golint, gochecknoglobals
+// nolint: unused, golint, gochecknoglobals
 var (
 	buffer                  [bufferSize]byte
 	peerConnectionExplainer explainer.PeerConnectionExplainer
@@ -38,6 +39,7 @@ func maybeInitExplainer() { //nolint: deadcode, unused
 }
 
 // SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
+//
 //export SetLocalDescription
 func SetLocalDescription(length int) { //nolint: unused, deadcode
 	maybeInitExplainer()
@@ -45,6 +47,7 @@ func SetLocalDescription(length int) { //nolint: unused, deadcode
 }
 
 // SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
+//
 //export SetRemoteDescription
 func SetRemoteDescription(length int) { //nolint: deadcode, unused, golint
 	maybeInitExplainer()
@@ -52,6 +55,7 @@ func SetRemoteDescription(length int) { //nolint: deadcode, unused, golint
 }
 
 // Explain returns the result of the current PeerConnectionExplainer.
+//
 //export Explain
 func Explain() int { //nolint: deadcode, unused
 	maybeInitExplainer()
@@ -66,6 +70,7 @@ func Explain() int { //nolint: deadcode, unused
 }
 
 // GetLocalDescription returns the current SDP we are using from SetLocalDescription
+//
 //export GetLocalDescription
 func GetLocalDescription() int { //nolint: deadcode, unused
 	maybeInitExplainer()
@@ -74,6 +79,7 @@ func GetLocalDescription() int { //nolint: deadcode, unused
 }
 
 // GetRemoteDescription returns the current SDP we are using from GetRemoteDescription
+//
 //export GetRemoteDescription
 func GetRemoteDescription() int { //nolint: deadcode, unused
 	maybeInitExplainer()

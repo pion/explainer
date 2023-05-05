@@ -4,6 +4,7 @@
 // Package result contains the structured data returned to callers
 package result
 
+//nolint:gochecknoglobals
 var (
 	errNoIceUserFragment          = "No ICE Username Fragment Found"
 	errConflictingIceUserFragment = "Conflicting ICE Username Fragments Found"

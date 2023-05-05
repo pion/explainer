@@ -3,6 +3,7 @@
 
 package sdp
 
+//nolint:gochecknoglobals
 var (
 	errProtocolVersionNotFound = "v (protocol version) was expected, but not found"
 	errOriginatorNotFound      = "o (originator and session identifier) was expected, but not found"
