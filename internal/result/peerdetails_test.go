@@ -31,6 +31,7 @@ func runPeerDetailsTest(t *testing.T, tests []testRun) {
 	}
 }
 
+// nolint
 func TestPeerDetailsICE(t *testing.T) {
 	runPeerDetailsTest(t, []testRun{
 		{
