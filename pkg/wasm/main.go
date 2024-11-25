@@ -1,90 +1,47 @@
 // SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
 // SPDX-License-Identifier: MIT
 
+//go:build js
+// +build js
+
 // Package main implements a WASM example
 package main
 
 import (
 	"encoding/json"
+	"syscall/js"
 
 	"github.com/pion/explainer"
 )
 
-// nolint: deadcode, unused, revive
-type (
-	Result         = explainer.Result
-	SessionDetails = explainer.SessionDetails
-	PeerDetails    = explainer.PeerDetails
-)
-
-const (
-	bufferSize int = 500000
-)
-
-// nolint: unused, golint, gochecknoglobals
+//nolint:gochecknoglobals
 var (
-	buffer                  [bufferSize]byte
-	peerConnectionExplainer explainer.PeerConnectionExplainer
+	exp explainer.PeerConnectionExplainer
 )
 
-func main() {}
-
-//export getWasmMemoryBufferOffset
-func getWasmMemoryBufferOffset() *[bufferSize]byte { //nolint: deadcode, unused
-	return &buffer
-}
-
-func maybeInitExplainer() { //nolint: deadcode, unused
-	if peerConnectionExplainer == nil {
-		peerConnectionExplainer = explainer.NewPeerConnectionExplainer()
+func explain(_ js.Value, inputs []js.Value) interface{} {
+	if len(inputs) != 2 {
+		panic("invalid number of inputs") //nolint:forbidigo
 	}
-}
 
-// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
-//
-//export SetLocalDescription
-func SetLocalDescription(length int) { //nolint: unused, deadcode
-	maybeInitExplainer()
-	peerConnectionExplainer.SetLocalDescription(string(buffer[:length]))
-}
+	localDescription := inputs[0].String()
+	remoteDescription := inputs[1].String()
 
-// SetRemoteDescription updates the PeerConnectionExplainer with the provided SessionDescription
-//
-//export SetRemoteDescription
-func SetRemoteDescription(length int) { //nolint: deadcode, unused, golint
-	maybeInitExplainer()
-	peerConnectionExplainer.SetRemoteDescription(string(buffer[:length]))
-}
+	exp.SetLocalDescription(localDescription)
+	exp.SetRemoteDescription(remoteDescription)
 
-// Explain returns the result of the current PeerConnectionExplainer.
-//
-//export Explain
-func Explain() int { //nolint: deadcode, unused
-	maybeInitExplainer()
-
-	result := peerConnectionExplainer.Explain()
-	j, err := json.Marshal(result)
+	out, err := json.Marshal(exp.Explain())
 	if err != nil {
-		return 0
+		panic(err) //nolint:forbidigo
 	}
 
-	return copy(buffer[:], j)
+	return string(out)
 }
 
-// GetLocalDescription returns the current SDP we are using from SetLocalDescription
-//
-//export GetLocalDescription
-func GetLocalDescription() int { //nolint: deadcode, unused
-	maybeInitExplainer()
+func main() {
+	exp = explainer.NewPeerConnectionExplainer()
 
-	return copy(buffer[:], peerConnectionExplainer.GetLocalDescription())
-}
+	js.Global().Set("explain", js.FuncOf(explain))
 
-// GetRemoteDescription returns the current SDP we are using from GetRemoteDescription
-//
-//export GetRemoteDescription
-func GetRemoteDescription() int { //nolint: deadcode, unused
-	maybeInitExplainer()
-
-	return copy(buffer[:], peerConnectionExplainer.GetRemoteDescription())
+	select {}
 }
