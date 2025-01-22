@@ -6,7 +6,7 @@ package result
 import "github.com/pion/explainer/pkg/output"
 
 // MediaFormatDetails contains the details of
-// a single MediaFormat
+// a single MediaFormat.
 type MediaFormatDetails struct {
 	PayloadType output.Message `json:"payloadType"`
 

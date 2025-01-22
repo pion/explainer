@@ -25,6 +25,7 @@ func (s *sdpScanner) messageForError(err error) output.Message {
 	if err == nil {
 		return output.Message{}
 	}
+
 	return s.messageForLine(err.Error())
 }
 
@@ -50,12 +51,14 @@ type attributeStatus struct {
 }
 
 // Detect if the current attribute is ok to be read (detect out of order errors)
-// or if it has already been set
+// or if it has already been set.
 func (s *sdpScanner) attributeValid(statuses []*attributeStatus, attribute string) output.Message {
 	attrFound := false
 	for _, v := range statuses {
 		if attrFound && v.line != 0 {
-			return s.messageForLine("Attribute " + attribute + " was found, but later attribute " + v.value + " has already been set")
+			return s.messageForLine(
+				"Attribute " + attribute + " was found, but later attribute " + v.value + " has already been set",
+			)
 		}
 
 		if v.value == attribute {
@@ -66,5 +69,6 @@ func (s *sdpScanner) attributeValid(statuses []*attributeStatus, attribute strin
 			v.line = s.currentLine
 		}
 	}
+
 	return output.Message{}
 }

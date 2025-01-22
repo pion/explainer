@@ -3,7 +3,7 @@
 
 package sdp
 
-// Constants for SDP attributes used in JSEP
+// Constants for SDP attributes used in JSEP.
 const (
 	AttrKeyIdentity        = "identity"
 	AttrKeyGroup           = "group"
@@ -17,7 +17,7 @@ const (
 	AttrKeyRtcpRsize       = "rtcp-rsize"
 )
 
-// Constants for semantic tokens used in JSEP
+// Constants for semantic tokens used in JSEP.
 const (
 	SemanticTokenLipSynchronization     = "LS"
 	SemanticTokenFlowIdentification     = "FID"

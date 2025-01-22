@@ -12,7 +12,7 @@ import (
 	"github.com/pion/explainer/pkg/output"
 )
 
-// PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions
+// PeerConnectionExplainer mocks the PeerConnection API and returns analysis and suggestions.
 type PeerConnectionExplainer interface {
 	// SetLocalDescription updates the PeerConnectionExplainer with the provided SessionDescription
 	SetLocalDescription(input string)
@@ -30,7 +30,7 @@ type PeerConnectionExplainer interface {
 	Explain() Result
 }
 
-// NewPeerConnectionExplainer returns a new PeerConnectionExplainer
+// NewPeerConnectionExplainer returns a new PeerConnectionExplainer.
 func NewPeerConnectionExplainer() PeerConnectionExplainer {
 	return &peerConnectionExplainer{}
 }
@@ -54,6 +54,7 @@ func generateSessionDescription(input string) sessionDescription {
 	}
 
 	s.SDP = strings.ReplaceAll(s.SDP, "\\r\\n", "\n")
+
 	return s
 }
 
@@ -76,7 +77,7 @@ func (pe *peerConnectionExplainer) Explain() (result Result) {
 	}
 
 	if len(result.Warnings) == 2 {
-		return // No SessionDescriptions we can check
+		return result
 	}
 
 	if pe.localDescription.Type != "" && pe.localDescription.Type == pe.remoteDescription.Type {

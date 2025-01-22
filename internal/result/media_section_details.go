@@ -6,7 +6,7 @@ package result
 import "github.com/pion/explainer/pkg/output"
 
 // MediaSectionDetails contains the details of
-// a single MediaSection
+// a single MediaSection.
 type MediaSectionDetails struct {
 	// ID is commonly referred to as MID
 	ID output.Message `json:"id"`

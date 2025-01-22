@@ -33,15 +33,15 @@ import (
 // a=* (zero or more session attribute lines)
 // Zero or more media descriptions
 // https://tools.ietf.org/html/rfc4566#section-5
-func (s *SessionDescription) Unmarshal(raw string) output.Message {
+func (s *SessionDescription) Unmarshal(raw string) output.Message { //nolint:cyclop
 	s.Reset()
 	scanner := &sdpScanner{bufio.NewScanner(strings.NewReader(raw)), -1}
 	var err error
 
 	// v=
-	key, value, scanStatus, m := scanner.nextLine()
-	if m.Message != "" {
-		return m
+	key, value, scanStatus, msg := scanner.nextLine()
+	if msg.Message != "" {
+		return msg
 	} else if !scanStatus {
 		return scanner.messageForLine(errEarlyEndVersion)
 	} else if key != "v" {
@@ -51,10 +51,10 @@ func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	}
 
 	// o=
-	key, value, scanStatus, m = scanner.nextLine()
+	key, value, scanStatus, msg = scanner.nextLine()
 	switch {
-	case m.Message != "":
-		return m
+	case msg.Message != "":
+		return msg
 	case !scanStatus:
 		return scanner.messageForLine(errEarlyEndOriginator)
 	case key != "o":
@@ -63,11 +63,11 @@ func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	s.Origin = ValueWithLine{value, scanner.currentLine}
 
 	// s=
-	key, value, scanStatus, m = scanner.nextLine()
+	key, value, scanStatus, msg = scanner.nextLine()
 	switch {
 	case err != nil:
-	case m.Message != "":
-		return m
+	case msg.Message != "":
+		return msg
 	case !scanStatus:
 		return scanner.messageForLine(errEarlyEndSessionName)
 	case key != "s":
@@ -78,7 +78,7 @@ func (s *SessionDescription) Unmarshal(raw string) output.Message {
 	return s.unmarshalOptionalAttributes(scanner)
 }
 
-func (s *SessionDescription) unmarshalOptionalAttributes(scanner *sdpScanner) output.Message {
+func (s *SessionDescription) unmarshalOptionalAttributes(scanner *sdpScanner) output.Message { //nolint:cyclop
 	orderedSessionAttributes := []*attributeStatus{
 		{value: "v"},
 		{value: "o"},
@@ -138,6 +138,7 @@ func (s *SessionDescription) unmarshalOptionalAttributes(scanner *sdpScanner) ou
 	}
 }
 
+//nolint:cyclop
 func (s *SessionDescription) unmarshalMedias(scanner *sdpScanner, firstMediaName string) output.Message {
 	currentMedia := &MediaDescription{MediaName: ValueWithLine{firstMediaName, scanner.currentLine}}
 	orderedMediaAttributes := []*attributeStatus{
@@ -157,6 +158,7 @@ func (s *SessionDescription) unmarshalMedias(scanner *sdpScanner, firstMediaName
 		key, value, scanStatus, m := scanner.nextLine()
 		if m.Message != "" || !scanStatus { // This handles EOF, finish current MediaDescription
 			s.MediaDescriptions = append(s.MediaDescriptions, currentMedia)
+
 			return m
 		}
 

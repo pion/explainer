@@ -9,14 +9,14 @@ import (
 )
 
 // PeerDetails contains the details published by a single peer. This is what
-// a single peer Offered or Answered
+// a single peer Offered or Answered.
 type PeerDetails = result.PeerDetails
 
 // SessionDetails is the combination of the Offer/Answer and what the actual state
 // of the WebRTC session is.
 type SessionDetails = result.SessionDetails
 
-// Result is the current status of the PeerConnectionExplainer
+// Result is the current status of the PeerConnectionExplainer.
 type Result struct {
 	Errors      []output.Message `json:"errors"`
 	Warnings    []output.Message `json:"warnings"`

@@ -23,6 +23,7 @@ func allValuesEqual(vals []sdp.ValueWithLine) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -30,12 +31,13 @@ func sdpLinesToSources(values []sdp.ValueWithLine, sourceType output.SourceType)
 	for _, v := range values {
 		outputs = append(outputs, output.Source{Line: v.Line, Type: sourceType})
 	}
+
 	return
 }
 
 // ice-char = ALPHA / DIGIT / "+" / "/"
 // https://datatracker.ietf.org/doc/html/rfc5245#section-15.1
-func isValidIceCharString(iceChar string) bool {
+func isValidIceCharString(iceChar string) bool { //nolint:cyclop
 	for _, c := range iceChar {
 		switch {
 		case c >= '0' && c <= '9':
@@ -46,11 +48,12 @@ func isValidIceCharString(iceChar string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
 // https://datatracker.ietf.org/doc/html/rfc4572#section-5
-func isValidCertificateFingerprint(fingerprint string) string {
+func isValidCertificateFingerprint(fingerprint string) string { //nolint:cyclop
 	spaceSplit := strings.Split(fingerprint, " ")
 	if len(spaceSplit) != 2 {
 		return errMissingSeperatorCertificateFingerprint

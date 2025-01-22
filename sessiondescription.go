@@ -10,7 +10,7 @@ type sessionDescription struct {
 	SDP  string `json:"sdp"`
 }
 
-func (s *sessionDescription) unmarshal(in string) {
+func (s *sessionDescription) unmarshal(in string) { //nolint:cyclop
 	inTag := false
 	inString := false
 

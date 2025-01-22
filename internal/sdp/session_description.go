@@ -6,7 +6,7 @@ package sdp
 
 import "strings"
 
-// ValueWithLine contains a value and the line it was found in the source
+// ValueWithLine contains a value and the line it was found in the source.
 type ValueWithLine struct {
 	Value string
 	Line  int
@@ -94,7 +94,7 @@ type SessionDescription struct {
 	MediaDescriptions []*MediaDescription
 }
 
-// Reset cleans the SessionDescription, and sets all fields back to their default values
+// Reset cleans the SessionDescription, and sets all fields back to their default values.
 func (s *SessionDescription) Reset() {
 	s.ProtocolVersion = 0
 	s.Origin = ValueWithLine{}
@@ -113,7 +113,7 @@ func (s *SessionDescription) Reset() {
 	s.MediaDescriptions = nil
 }
 
-// ScanForAttribute searches for attributes with a given prefix
+// ScanForAttribute searches for attributes with a given prefix.
 func (s *SessionDescription) ScanForAttribute(prefix string, _, _ bool) (rtrn []ValueWithLine) {
 	for _, a := range s.Attributes {
 		if strings.HasPrefix(a.Value, prefix) {

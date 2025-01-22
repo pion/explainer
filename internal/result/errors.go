@@ -16,8 +16,10 @@ var (
 	errInvalidIcePassword     = "ICE Password Found, but is invalid value"
 	errShortIcePassword       = "ICE Password Found, but is not long enough"
 
-	errNoCertificateFingerprint               = "No Certificate Fingerprint Found"
-	errConflictingCertificateFingerprints     = "Conflicting Certificate Fingerprints Found"
+	errNoCertificateFingerprint           = "No Certificate Fingerprint Found"
+	errConflictingCertificateFingerprints = "Conflicting Certificate Fingerprints Found"
+	//nolint:lll
 	errMissingSeperatorCertificateFingerprint = "Certificate Fingerprint was found, but did not contain two values separated by a space"
-	errInvalidHexCertificateFingerprint       = "Certificate Fingerprint was found, but did not contain a valid hex value for certificate"
+	//nolint:lll
+	errInvalidHexCertificateFingerprint = "Certificate Fingerprint was found, but did not contain a valid hex value for certificate"
 )
