@@ -10,7 +10,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install tinygo
-        run: wget https://github.com/tinygo-org/tinygo/releases/download/v0.21.0/tinygo_0.21.0_amd64.deb && sudo dpkg -i tinygo_0.21.0_amd64.deb
+        run: wget https://github.com/tinygo-org/tinygo/releases/download/v0.35.0/tinygo_0.35.0_amd64.deb && sudo dpkg -i tinygo_0.35.0_amd64.deb
 
       - name: Build WASM
         run: cd web && cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js . && tinygo build -o wasm.wasm -target wasm  -no-debug --panic trap ../pkg/wasm/
