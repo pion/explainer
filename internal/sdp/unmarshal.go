@@ -65,7 +65,6 @@ func (s *SessionDescription) Unmarshal(raw string) output.Message { //nolint:cyc
 	// s=
 	key, value, scanStatus, msg = scanner.nextLine()
 	switch {
-	case err != nil:
 	case msg.Message != "":
 		return msg
 	case !scanStatus:
