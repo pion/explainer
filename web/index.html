@@ -243,16 +243,11 @@
       }
     }
 
-    let wasm, memoryOffset
-    let wasmMemory = () => {
-      return new Uint8Array(wasm.exports.memory.buffer)
-    }
-
     let handleInput = () => {
       const localDescription = document.querySelector('#local-description-div textarea').value
       const remoteDescription = document.querySelector('#remote-description-div textarea').value
 
-      if (wasm === undefined) {
+      if (explain === undefined) {
         return
       } else if (document.querySelector('#remote-description-div input').checked && remoteDescription.length === 0) {
         return
@@ -260,18 +255,10 @@
         return
       }
 
-      wasmMemory().set((new TextEncoder().encode(remoteDescription)), memoryOffset)
-      wasm.exports.SetRemoteDescription(remoteDescription.length)
+      result_str = explain(localDescription, remoteDescription)
+      result = JSON.parse(result_str)
 
-      wasmMemory().set((new TextEncoder().encode(localDescription)), memoryOffset)
-      wasm.exports.SetLocalDescription(localDescription.length)
-
-      let explainResult = wasm.exports.Explain()
-      renderOutput(
-        JSON.parse(new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + explainResult))),
-        new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.GetLocalDescription())),
-        new TextDecoder().decode(wasmMemory().subarray(memoryOffset, memoryOffset + wasm.exports.GetRemoteDescription()))
-      )
+      renderOutput(result, localDescription, remoteDescription)
     }
 
     for (let i of document.querySelectorAll('input[type=checkbox]')) {
@@ -290,9 +277,7 @@
       resp.arrayBuffer()
     ).then(bytes =>
       WebAssembly.instantiate(bytes, go.importObject).then(function (obj) {
-        wasm = obj.instance
-        memoryOffset = wasm.exports.getWasmMemoryBufferOffset()
-        go.run(wasm)
+        go.run(obj.instance)
       })
     )
   </script>
