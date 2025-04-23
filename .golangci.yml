@@ -133,8 +133,8 @@ issues:
     # Allow complex tests and examples, better to be self contained
     - path: (examples|main\.go)
       linters:
-        - forbidigo
         - gocognit
+        - forbidigo
     - path: _test\.go
       linters:
         - gocognit
