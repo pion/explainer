@@ -1,6 +1,6 @@
 module github.com/pion/explainer
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/disgoorg/log v1.2.1
