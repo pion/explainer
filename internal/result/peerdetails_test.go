@@ -22,7 +22,6 @@ func runPeerDetailsTest(t *testing.T, tests []testRun) {
 	t.Helper()
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			p := PeerDetails{}
 			messages := p.Populate(test.sdp, 0)
