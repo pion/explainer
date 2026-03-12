@@ -59,7 +59,7 @@ func isValidCertificateFingerprint(fingerprint string) string { //nolint:cyclop
 		return errMissingSeperatorCertificateFingerprint
 	}
 
-	for _, v := range strings.Split(spaceSplit[1], ":") {
+	for v := range strings.SplitSeq(spaceSplit[1], ":") {
 		if len(v) != 2 {
 			return errInvalidHexCertificateFingerprint
 		}
