@@ -1,0 +1,492 @@
+<!--
+SPDX-FileCopyrightText: 2026 The Pion community <https://pion.ly>
+
+SPDX-License-Identifier: MIT
+-->
+
+<script lang="ts">
+	import pionLogo from '$lib/assets/pion-logo.svg?raw';
+	import { syntaxParts } from '$lib/grammar';
+	import { markdown } from '$lib/markdown';
+	import { locate, parseSDP } from '$lib/parser';
+	import { exampleSDP } from '$lib/spec';
+	import { theme } from '$lib/theme.svelte';
+	import type { SDPLocation, SDPPart } from '$lib/types';
+	import { fade } from 'svelte/transition';
+
+	let editorEl = $state<HTMLTextAreaElement>();
+	let ghostEl = $state<HTMLDivElement>();
+	let viewportEl = $state<HTMLDivElement>();
+
+	let sdpText = $state(exampleSDP);
+	let caret = $state(0);
+	let hover = $state<SDPLocation | null>(null);
+	let pointer: { x: number; y: number } | null = null;
+
+	// The keyboard (and clicking, which places the caret just as deliberately)
+	// takes the lead as soon as it is used, so the caret does not fight a
+	// pointer that is only resting somewhere over the editor. Moving the mouse
+	// again hands control back to hover.
+	let usingKeyboard = $state(false);
+
+	let lines = $derived(parseSDP(sdpText));
+	let active = $derived((usingKeyboard ? null : hover) ?? locate(lines, caret));
+
+	// Where the caret sits, independent of whatever the mouse is doing. This
+	// stays highlighted even while hover is pointing somewhere else entirely.
+	let caretLocation = $derived(locate(lines, caret));
+
+	// The tooltip and details panel lag `active` by DEBOUNCE_MS, but only while
+	// hover is what's driving it — a mouse sweeping across many tokens
+	// shouldn't flicker either one. Deliberately placing the caret (clicking,
+	// typing, arrow keys) updates them immediately.
+	const DEBOUNCE_MS = 200;
+	let debouncedActive = $state<SDPLocation | null>(null);
+	let hoverDriven = $derived(!usingKeyboard && hover !== null);
+	$effect(() => {
+		const target = active;
+		if (!hoverDriven) {
+			debouncedActive = target;
+			return;
+		}
+		const timer = setTimeout(() => (debouncedActive = target), DEBOUNCE_MS);
+		return () => clearTimeout(timer);
+	});
+
+	let activeLine = $derived(debouncedActive ? lines[debouncedActive.lineIndex] : null);
+	let detail = $derived(activeLine?.details);
+
+	let activeField = $derived(
+		debouncedActive?.fieldIndex != null
+			? (activeLine?.fields[debouncedActive.fieldIndex] ?? null)
+			: null
+	);
+	let activeArgIndex = $derived(activeField?.argIndex ?? null);
+	let activeArg = $derived(activeArgIndex !== null ? detail?.args[activeArgIndex] : undefined);
+
+	// A documented value — "typ host", "setup:actpass" — is worth calling out on
+	// its own, so the panel can explain the token rather than just its slot.
+	let activeValue = $derived(
+		activeArg?.values?.find(
+			(value) => value.value.toLowerCase() === activeField?.text.toLowerCase()
+		)
+	);
+
+	// Where this line sits, which is what decides whether "a=" lines are in scope.
+	let placement = $derived(
+		activeLine == null || activeLine.section === null
+			? 'Session level'
+			: `Media ${activeLine.section} · ${activeLine.sectionMedia ?? '?'}`
+	);
+
+	// Prefixed, so the two badges read as two facts — where the line is, and where
+	// it is allowed to be — rather than as the same fact written twice.
+	const LEVELS = {
+		session: 'Allowed: session only',
+		media: 'Allowed: media only',
+		both: 'Allowed: session or media'
+	};
+
+	// SDP has no schema to validate against, so a line in the wrong half of the
+	// description is silently ignored by the peer rather than rejected.
+	let misplaced = $derived(
+		detail?.level === 'session'
+			? activeLine?.section !== null
+			: detail?.level === 'media'
+				? activeLine?.section === null
+				: false
+	);
+
+	let syntax = $derived(detail ? syntaxParts(detail) : []);
+
+	let tooltip = $derived(activeArg ? `<${activeArg.name}>` : detail?.title);
+	// Kept in sync with the tooltip's CSS height so it can be placed before it renders.
+	const TOOLTIP_HEIGHT = 26;
+
+	let tooltipPos = $state({ x: 0, y: 0 });
+	let showTooltip = $state(false);
+	let focused = $state(false);
+
+	const isActivePart = (lineIndex: number, part: SDPPart) => {
+		if (active?.lineIndex !== lineIndex || part.kind === 'plain') return false;
+		return part.kind === 'type'
+			? active.fieldIndex === null
+			: active.fieldIndex === part.fieldIndex;
+	};
+
+	const isCaretPart = (lineIndex: number, part: SDPPart) => {
+		if (caretLocation?.lineIndex !== lineIndex || part.kind === 'plain') return false;
+		return part.kind === 'type'
+			? caretLocation.fieldIndex === null
+			: caretLocation.fieldIndex === part.fieldIndex;
+	};
+
+	// Found by indexing straight into the DOM from `debouncedActive` rather than
+	// querying for a marker attribute: the marker is written by the same render
+	// pass that this effect can run ahead of, which left the tooltip measuring
+	// last render's anchor. The span layout itself never lags — only classes and
+	// attributes do — so indexing is safe the instant `debouncedActive` changes.
+	const tooltipAnchorEl = (): Element | null => {
+		if (!debouncedActive || !ghostEl) return null;
+		const { lineIndex, fieldIndex } = debouncedActive;
+
+		const parts = lines[lineIndex]?.parts;
+		const lineEl = ghostEl.children[lineIndex];
+		if (!parts || !lineEl) return null;
+
+		const p = parts.findIndex(
+			(part) =>
+				part.kind !== 'plain' &&
+				(part.kind === 'type' ? fieldIndex === null : part.fieldIndex === fieldIndex)
+		);
+		return p === -1 ? null : (lineEl.children[p] ?? null);
+	};
+
+	const partClass = (lineIndex: number, part: SDPPart) => {
+		const highlighted = isActivePart(lineIndex, part);
+		const isCaret = isCaretPart(lineIndex, part);
+		return [
+			part.kind === 'type' && 'text-token-type',
+			part.kind === 'type' && (isCaret ? 'font-bold' : 'font-semibold'),
+			part.kind === 'key' && 'text-token-key',
+			part.kind === 'value' && 'text-token-value',
+			(highlighted || isCaret) &&
+				(part.kind === 'value' ? 'bg-token-value-wash' : 'bg-token-key-wash'),
+			isCaret && part.kind !== 'type' && 'font-bold'
+		];
+	};
+
+	const syncCaret = () => {
+		if (editorEl) caret = editorEl.selectionStart;
+	};
+
+	/**
+	 * Resolves a viewport point to a line and field. The textarea sits above the
+	 * highlighted overlay and swallows pointer events, so the overlay cannot be
+	 * hovered directly — its geometry is hit-tested by hand instead. Every line is
+	 * the same height, which turns the vertical search into one division.
+	 */
+	const locatePoint = (x: number, y: number): SDPLocation | null => {
+		const first = ghostEl?.children[0]?.getBoundingClientRect();
+		if (!first?.height) return null;
+
+		const lineIndex = Math.floor((y - first.top) / first.height);
+		const lineEl = ghostEl?.children[lineIndex];
+		if (!lineEl || lineIndex < 0 || lineIndex >= lines.length) return null;
+
+		// Parts are rendered one span each, so a span's position is its part's index.
+		const parts = lines[lineIndex].parts;
+		for (let p = 0; p < lineEl.children.length; p++) {
+			const rect = lineEl.children[p].getBoundingClientRect();
+			if (x < rect.left || x >= rect.right) continue;
+
+			return { lineIndex, fieldIndex: parts[p]?.fieldIndex ?? null };
+		}
+
+		// Past the end of the line: still that line, just no particular field.
+		return { lineIndex, fieldIndex: null };
+	};
+
+	const syncHover = () => {
+		hover = pointer ? locatePoint(pointer.x, pointer.y) : null;
+	};
+
+	const onPointerMove = (event: MouseEvent) => {
+		pointer = { x: event.clientX, y: event.clientY };
+		usingKeyboard = false;
+		syncHover();
+	};
+
+	const onPointerLeave = () => {
+		pointer = null;
+		hover = null;
+	};
+
+	const syncScroll = () => {
+		if (!ghostEl || !editorEl) return;
+		ghostEl.scrollTop = editorEl.scrollTop;
+		ghostEl.scrollLeft = editorEl.scrollLeft;
+		// Scrolling moves the text under a stationary pointer.
+		syncHover();
+		placeTooltip();
+	};
+
+	const placeTooltip = () => {
+		const anchor = tooltipAnchorEl();
+		if (!anchor || !viewportEl || !tooltip || !(hover || focused)) {
+			showTooltip = false;
+			return;
+		}
+
+		const rect = anchor.getBoundingClientRect();
+		const bounds = viewportEl.getBoundingClientRect();
+
+		// The anchor can be scrolled out of the editor viewport, and the tooltip is
+		// positioned against the window, so it has to be hidden by hand.
+		if (rect.bottom <= bounds.top || rect.top >= bounds.bottom) {
+			showTooltip = false;
+			return;
+		}
+
+		// Sit clear above the token rather than over it: the tooltip is a fixed
+		// TOOLTIP_HEIGHT tall, so the gap below it is exact.
+		tooltipPos = { x: Math.max(rect.left, bounds.left), y: rect.top - TOOLTIP_HEIGHT - 4 };
+		showTooltip = true;
+	};
+
+	$effect(() => theme.hydrate());
+
+	// Anything that moves the editor invalidates the measured anchor.
+	$effect(() => {
+		const reposition = () => placeTooltip();
+
+		window.addEventListener('scroll', reposition, true);
+		window.addEventListener('resize', reposition);
+		return () => {
+			window.removeEventListener('scroll', reposition, true);
+			window.removeEventListener('resize', reposition);
+		};
+	});
+
+	// Covers every way the caret can move: typing, clicking, arrow keys, undo.
+	$effect(() => {
+		const onSelectionChange = () => {
+			if (document.activeElement === editorEl) syncCaret();
+		};
+
+		document.addEventListener('selectionchange', onSelectionChange);
+		return () => document.removeEventListener('selectionchange', onSelectionChange);
+	});
+
+	$effect(() => {
+		// Re-measure once the overlay has re-rendered. This tracks `debouncedActive`
+		// rather than just the tooltip text, because neighbouring lines often share
+		// a tooltip ("Attribute") and the anchor still has to move between them.
+		void [debouncedActive, tooltip, sdpText, focused];
+		placeTooltip();
+	});
+
+	$effect(() => {
+		if (activeArgIndex === null) return;
+		document.getElementById(`details-arg-${activeArgIndex}`)?.scrollIntoView({
+			behavior: 'smooth',
+			block: 'nearest'
+		});
+	});
+</script>
+
+<!--
+	The page itself never scrolls: the editor and the details panel each scroll
+	inside their own row. That also keeps scrollIntoView() on the argument list
+	from shifting the editor out from under the tooltip.
+-->
+<main
+	class="mx-auto grid h-svh w-[92%] max-w-[1700px] grid-rows-[auto_minmax(0,1fr)_auto] gap-3 overflow-hidden"
+>
+	<header>
+		<nav class="flex flex-wrap items-center gap-x-8 gap-y-4 py-8">
+			<a class="pion-logo" href="https://pion.ly">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html pionLogo}
+			</a>
+
+			<h1 class="font-brand text-[28px] font-medium">SDP Explainer</h1>
+
+			<div class="ml-auto flex items-center gap-6">
+				<button
+					type="button"
+					class="cursor-pointer rounded-[5px] border border-hairline bg-surface p-2 text-heading transition hover:border-subtle-outline"
+					aria-label="Switch to {theme.current === 'dark' ? 'light' : 'dark'} theme"
+					onclick={() => theme.toggle()}
+				>
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						aria-hidden="true"
+					>
+						{#if theme.current === 'dark'}
+							<circle cx="12" cy="12" r="4.2" />
+							<path
+								d="M12 2.2v2.1M12 19.7v2.1M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M2.2 12h2.1M19.7 12h2.1M4.9 19.1l1.5-1.5M17.6 6.4l1.5-1.5"
+							/>
+						{:else}
+							<path d="M20.8 13.2A8.6 8.6 0 1 1 10.8 3.2a6.7 6.7 0 0 0 10 10Z" />
+						{/if}
+					</svg>
+				</button>
+			</div>
+		</nav>
+	</header>
+
+	<div
+		class="grid min-h-0 grid-rows-[minmax(0,3fr)_minmax(0,2fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:grid-rows-[minmax(0,1fr)]"
+	>
+		<div
+			class="relative overflow-hidden rounded-[5px] border border-hairline bg-surface transition-colors focus-within:border-subtle-outline"
+			bind:this={viewportEl}
+		>
+			<div
+				class="sdp-layer pointer-events-none absolute inset-0 overflow-hidden"
+				aria-hidden="true"
+				bind:this={ghostEl}
+			>
+				<!-- prettier-ignore -->
+				{#each lines as line, i (i)}
+					<div class={['sdp-line w-fit min-w-full rounded-sm', active?.lineIndex === i && line.content && 'bg-line-highlight']}>{#each line.parts as part, p (p)}<span class={partClass(i, part)} data-active={isActivePart(i, part) || undefined}>{part.text}</span>{/each}</div>
+				{/each}
+			</div>
+
+			{#if sdpText === ''}
+				<div class="sdp-layer pointer-events-none absolute inset-0 opacity-60 select-none">
+					Paste your session description here...
+				</div>
+			{/if}
+
+			<textarea
+				class="sdp-layer absolute inset-0 size-full resize-none overflow-auto bg-transparent text-transparent caret-heading outline-none"
+				spellcheck="false"
+				autocapitalize="none"
+				autocomplete="off"
+				translate="no"
+				wrap="off"
+				aria-label="Session description"
+				bind:value={sdpText}
+				bind:this={editorEl}
+				onscroll={syncScroll}
+				onmousemove={onPointerMove}
+				onmouseleave={onPointerLeave}
+				oninput={() => {
+					usingKeyboard = true;
+					syncCaret();
+				}}
+				onkeydown={() => (usingKeyboard = true)}
+				onclick={() => {
+					usingKeyboard = true;
+					syncCaret();
+				}}
+				onkeyup={syncCaret}
+				onfocus={() => {
+					focused = true;
+					syncCaret();
+				}}
+				onblur={() => (focused = false)}
+			></textarea>
+		</div>
+
+		<aside class="min-h-0 overflow-y-auto lg:pr-2">
+			{#if detail}
+				<h2 class="text-[26px]">{detail.title}</h2>
+
+				<div class="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
+					<span class="badge">{placement}</span>
+					{#if detail.level}
+						<span class={['badge', misplaced && 'badge-warn']}>{LEVELS[detail.level]}</span>
+					{/if}
+				</div>
+
+				<div
+					class="my-3 rounded-[5px] border border-hairline bg-background px-2 py-1 font-mono text-[15px] break-words text-heading"
+				>
+					<span class="text-token-type">{activeLine?.type}</span
+					>=<!--
+					-->{#each syntax as part, i (i)}<span
+							class={[
+								part.argIndex === null ? 'text-token-key' : 'text-token-value',
+								part.argIndex !== null &&
+									part.argIndex === activeArgIndex &&
+									'rounded-xs bg-token-value-wash'
+							]}>{part.text}</span
+						>{/each}
+				</div>
+
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html markdown(detail.description)}
+
+				{#if detail.args.length}
+					<h3 class="mt-6 text-[22px]">Arguments</h3>
+					<ul class="mt-1 flex flex-col gap-1">
+						{#each detail.args as arg, i (i)}
+							<li
+								class={[
+									'rounded-[5px] px-2 py-1 transition-colors',
+									activeArgIndex === i && 'bg-active-wash'
+								]}
+								id="details-arg-{i}"
+							>
+								<code class="text-heading">&lt;{arg.name}&gt;</code>
+								{#if arg.description}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									<span class="[&_p]:inline">{@html markdown(arg.description)}</span>
+								{/if}
+
+								<!-- Value lists are long; only the argument in play earns the space. -->
+								{#if arg.values && activeArgIndex === i}
+									<ul class="mt-2 flex flex-col gap-1.5 text-[16px]">
+										{#each arg.values as value (value.value)}
+											<li
+												class={[
+													'border-l-2 pl-2',
+													value === activeValue
+														? 'border-token-value text-heading'
+														: 'border-hairline'
+												]}
+											>
+												<code class="text-heading">{value.value}</code>
+												<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+												<span class="[&_p]:inline">{@html markdown(value.description)}</span>
+											</li>
+										{/each}
+									</ul>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+
+				{#if detail.details}
+					<hr class="my-5" />
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					{@html markdown(detail.details)}
+				{/if}
+
+				{#if detail.specs?.length}
+					<div class="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-[15px]">
+						{#each detail.specs as spec (spec.href)}
+							<!-- Every spec href is an absolute link out to an RFC, never a route. -->
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+							<a class="underline underline-offset-2" href={spec.href} target="_blank">
+								{spec.label}
+							</a>
+						{/each}
+					</div>
+				{/if}
+			{:else if activeLine?.content.trim()}
+				<p class="opacity-70">
+					No documentation for <code
+						>{activeLine.type ? `${activeLine.type}=` : activeLine.content.trim()}</code
+					>.
+				</p>
+			{:else}
+				<p class="opacity-70">Hover or select a line in the SDP to see details here...</p>
+			{/if}
+		</aside>
+	</div>
+</main>
+
+{#if showTooltip && tooltip}
+	{#key tooltip}
+		<div
+			class="pointer-events-none fixed z-10 rounded-[5px] border border-hairline bg-surface px-2 py-0.5 font-mono text-[14px] text-heading shadow-sm"
+			style="top: {tooltipPos.y}px; left: {tooltipPos.x}px;"
+			in:fade={{ duration: 80 }}
+			out:fade={{ duration: 120 }}
+		>
+			{tooltip}
+		</div>
+	{/key}
+{/if}

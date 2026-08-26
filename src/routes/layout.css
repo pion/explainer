@@ -1,0 +1,145 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Pion community <https://pion.ly>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/quicksand';
+
+/*
+ * Design tokens, typography and colour ported from the Pion website:
+ * https://github.com/pion/website/blob/main/static/styles.css
+ */
+
+@theme {
+	--font-brand: 'Quicksand Variable', 'Trebuchet MS', sans-serif;
+	--font-sans:
+		'Inter Variable', Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial,
+		sans-serif;
+	--font-mono:
+		ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+
+	/*
+	 * light-dark() resolves against the `color-scheme` on :root, so the theme
+	 * switch only has to set that one property — no dark: variants anywhere.
+	 */
+	--color-heading: light-dark(#0f2142, #f0f0f0);
+	--color-text: light-dark(#444f69, #bababa);
+	--color-link: light-dark(#d3322e, #ff726e);
+	--color-brand: #e53935;
+
+	--color-background: light-dark(#f0f0f0, #17152e);
+	--color-surface: light-dark(#ffffff, #232331);
+	--color-subtle-outline: light-dark(#bfbfbf, #383454);
+	--color-hairline: light-dark(#00000024, #ffffff18);
+	--color-line-highlight: light-dark(#0f21420d, #ffffff0a);
+	--color-active-wash: light-dark(#0f214214, #ffffff14);
+
+	/*
+	 * Syntax colours for the SDP editor, tuned to stay legible on both grounds.
+	 * Three roles, matching what the grammar distinguishes: the line type, the
+	 * literal keywords a grammar fixes ("candidate:", "typ", "raddr"), and the
+	 * argument values bound between them.
+	 */
+	--color-token-type: light-dark(#8b3fb8, #d0a3ec);
+	--color-token-key: light-dark(#9a5b12, #e6b877);
+	--color-token-value: light-dark(#1f6f8b, #9fd2e8);
+	--color-token-key-wash: light-dark(#9a5b1226, #e6b87733);
+	--color-token-value-wash: light-dark(#1f6f8b26, #9fd2e833);
+
+	--color-warn: light-dark(#b3261e, #ff8a80);
+	--color-warn-wash: light-dark(#b3261e1a, #ff8a801f);
+}
+
+:root {
+	color-scheme: light dark;
+	font-family: var(--font-sans);
+	font-size: 18px;
+}
+
+body {
+	background-color: var(--color-background);
+	color: var(--color-text);
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+	color: var(--color-heading);
+	font-family: var(--font-brand);
+	font-weight: 400;
+}
+
+h4 {
+	font-weight: 470;
+}
+
+a {
+	color: var(--color-link);
+}
+
+hr {
+	border: solid 1px var(--color-subtle-outline);
+}
+
+/* Inline code, as used by the rendered RFC prose. */
+code {
+	background-color: var(--color-surface);
+	border: 1px solid var(--color-hairline);
+	border-radius: 5px;
+	padding: 0.15rem 0.35rem;
+	font-family: var(--font-mono);
+	font-size: 0.8em;
+}
+
+/*
+ * The editor stacks a transparent textarea over a highlighted overlay, so both
+ * layers must share identical text metrics or the caret drifts away from the
+ * glyphs beneath it. Defining them once here is what keeps them honest.
+ */
+.sdp-layer {
+	padding: 0.75rem;
+	font-family: var(--font-mono);
+	font-size: 16px;
+	line-height: 24px;
+	white-space: pre;
+	tab-size: 2;
+}
+
+.sdp-line {
+	height: 24px;
+}
+
+/* The wordmark is drawn with fill="currentColor"; the dot keeps the brand red. */
+.pion-logo {
+	color: var(--color-heading);
+
+	& svg {
+		height: 60px;
+		width: auto;
+		max-width: 100%;
+	}
+}
+
+/*
+ * Panel chips: where the active line sits, and where its specification says it
+ * is allowed to sit. The warning variant marks the two disagreeing.
+ */
+.badge {
+	border: 1px solid var(--color-hairline);
+	border-radius: 999px;
+	padding: 0.1rem 0.55rem;
+	background-color: var(--color-surface);
+	white-space: nowrap;
+}
+
+.badge-warn {
+	border-color: var(--color-warn);
+	background-color: var(--color-warn-wash);
+	color: var(--color-warn);
+}

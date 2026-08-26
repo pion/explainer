@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 The Pion community <https://pion.ly>
+
+SPDX-License-Identifier: MIT
+-->
+
 <h1 align="center">
   <br>
   Pion Template
