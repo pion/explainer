@@ -19,6 +19,10 @@ SPDX-License-Identifier: MIT
 	<meta name="description" content="An interactive explainer for WebRTC SDP." />
 	<meta property="og:description" content="An interactive explainer for WebRTC SDP." />
 	<meta property="og:image" content="https://explainer.pion.ly/showcase.png" />
+	<meta property="og:image:type" content="image/png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
 	<meta property="og:url" content="https://explainer.pion.ly/" />
 
 	<!-- Served from static/ so the paths stay stable for browsers and crawlers. -->
