@@ -12,6 +12,15 @@ SPDX-License-Identifier: MIT
 
 <svelte:head>
 	<title>SDP Explainer - Pion</title>
+
+	<meta property="og:site_name" content="Pion" />
+	<meta property="og:title" content="SDP Explainer" />
+	<meta property="og:type" content="website" />
+	<meta name="description" content="An interactive explainer for WebRTC SDP." />
+	<meta property="og:description" content="An interactive explainer for WebRTC SDP." />
+	<meta property="og:image" content="https://explainer.pion.ly/showcase.png" />
+	<meta property="og:url" content="https://explainer.pion.ly/" />
+
 	<!-- Served from static/ so the paths stay stable for browsers and crawlers. -->
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="icon" type="image/png" href="/favicon.png" />
