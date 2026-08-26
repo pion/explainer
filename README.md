@@ -11,9 +11,9 @@ SPDX-License-Identifier: MIT
 </h1>
 <h4 align="center">A visual explainer for WebRTC SDP</h4>
 <p align="center">
-  <a href="https://pion.ly"><img src="https://img.shields.io/badge/pion-template-gray.svg?longCache=true&colorB=brightgreen" alt="Pion template"></a>
+  <a href="https://explainer.pion.ly"><img src="https://img.shields.io/badge/pion-explainer-gray.svg?longCache=true&colorB=brightgreen" alt="Pion Explainer"></a>
   <a href="https://discord.gg/PngbdqpFbt"><img src="https://img.shields.io/badge/join-us%20on%20discord-gray.svg?longCache=true&logo=discord&colorB=brightblue" alt="join us on Discord"></a> <a href="https://bsky.app/profile/pion.ly"><img src="https://img.shields.io/badge/follow-us%20on%20bluesky-gray.svg?longCache=true&logo=bluesky&colorB=brightblue" alt="Follow us on Bluesky"></a>  <br>
-  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/pion/template/test.yaml">
+  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/pion/explainer/deploy.yaml">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 <br>
