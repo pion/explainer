@@ -126,6 +126,10 @@ code {
 	}
 }
 
+.github-link {
+	color: var(--color-heading);
+}
+
 /*
  * Panel chips: where the active line sits, and where its specification says it
  * is allowed to sit. The warning variant marks the two disagreeing.
