@@ -335,7 +335,12 @@ Note that the same codec may appear several times under different payload types 
 		title: 'RTCP Multiplexing',
 		syntax: 'rtcp-mux',
 		level: 'media',
-		specs: [{ label: 'RFC 8858', href: 'https://datatracker.ietf.org/doc/html/rfc8858' }],
+		specs: [
+			{
+				label: 'RFC 5761 §5.1.1',
+				href: 'https://datatracker.ietf.org/doc/html/rfc5761#section-5.1.1'
+			}
+		],
 		description:
 			'A property attribute offering to carry RTP and RTCP on a single port. Both peers must offer it for it to apply.',
 		args: [],
@@ -386,7 +391,7 @@ Demultiplexing is by RTP payload type: values 64–95 are reserved so that they 
 		title: 'Frame Rate',
 		syntax: 'framerate:<frame rate>',
 		level: 'media',
-		specs: [rfc8866('6.9')],
+		specs: [rfc8866('6.13')],
 		description: 'The maximum video frame rate, in frames per second, as a decimal number.',
 		args: [
 			{
@@ -399,7 +404,7 @@ Demultiplexing is by RTP payload type: values 64–95 are reserved so that they 
 		title: 'Quality',
 		syntax: 'quality:<quality>',
 		level: 'media',
-		specs: [rfc8866('6.10')],
+		specs: [rfc8866('6.14')],
 		description:
 			'A suggestion of how much the sender may degrade quality to fit the bandwidth, 0–10.',
 		args: [

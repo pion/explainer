@@ -63,7 +63,7 @@ export const session: Record<string, Details> = {
 		title: 'Conference Type',
 		syntax: 'type:<conference type>',
 		level: 'session',
-		specs: [rfc8866('6.11')],
+		specs: [rfc8866('6.9')],
 		description:
 			'The kind of conference, which suggests default directions and floor control to the receiving tool.',
 		args: [
@@ -84,7 +84,7 @@ export const session: Record<string, Details> = {
 		title: 'Character Set',
 		syntax: 'charset:<character set>',
 		level: 'session',
-		specs: [rfc8866('6.12')],
+		specs: [rfc8866('6.10')],
 		description:
 			'The character set used by the "s=", "i=", "u=", "e=", "p=" and "a=keywds" lines of this description.',
 		args: [
@@ -99,7 +99,7 @@ export const session: Record<string, Details> = {
 		title: 'SDP Language',
 		syntax: 'sdplang:<language tag>',
 		level: 'both',
-		specs: [rfc8866('6.13')],
+		specs: [rfc8866('6.11')],
 		description:
 			'The language of the *description itself* — of its "s=" and "i=" text, not of the media.',
 		args: [
@@ -114,7 +114,7 @@ export const session: Record<string, Details> = {
 		title: 'Media Language',
 		syntax: 'lang:<language tag>',
 		level: 'both',
-		specs: [rfc8866('6.14')],
+		specs: [rfc8866('6.12')],
 		description:
 			'The language of the *media* — what is actually spoken or captioned. A session may repeat it once per media description to offer several audio languages.',
 		args: [
@@ -170,8 +170,8 @@ export const session: Record<string, Details> = {
 		level: 'both',
 		specs: [
 			{
-				label: 'RFC 7826 §18.4',
-				href: 'https://datatracker.ietf.org/doc/html/rfc7826#section-18.4'
+				label: 'RFC 7826 Appendix D.1.1',
+				href: 'https://datatracker.ietf.org/doc/html/rfc7826#appendix-D.1.1'
 			}
 		],
 		description:
@@ -191,8 +191,8 @@ export const session: Record<string, Details> = {
 		level: 'both',
 		specs: [
 			{
-				label: 'RFC 7826 §18.12',
-				href: 'https://datatracker.ietf.org/doc/html/rfc7826#section-18.12'
+				label: 'RFC 7826 Appendix D.1.6',
+				href: 'https://datatracker.ietf.org/doc/html/rfc7826#appendix-D.1.6'
 			}
 		],
 		description: 'An RTSP attribute stating the time range over which the stream is available.',

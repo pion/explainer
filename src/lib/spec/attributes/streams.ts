@@ -136,10 +136,13 @@ export const streams: Record<string, Details> = {
 		syntax: 'msid-semantic:<semantic> [<identifier>]...',
 		level: 'session',
 		specs: [
-			{ label: 'RFC 8830 §3', href: 'https://datatracker.ietf.org/doc/html/rfc8830#section-3' }
+			{
+				label: 'draft-ietf-mmusic-msid-08 §3',
+				href: 'https://datatracker.ietf.org/doc/html/draft-ietf-mmusic-msid-08#section-3'
+			}
 		],
 		description:
-			'Declares what the "a=msid" identifiers in this description mean. Written by convention with a space after the colon.',
+			'A legacy declaration of what the "a=msid" identifiers mean. It was removed before RFC 8830 was published but is still emitted by libwebrtc for compatibility. Written by convention with a space after the colon.',
 		args: [
 			{
 				name: 'semantic',
@@ -350,7 +353,7 @@ Every identifier named here **MUST** have a matching "a=rid" line in the same me
 			{
 				name: 'port',
 				description:
-					'Always 5000 in WebRTC. Since SCTP runs over DTLS over the ICE transport, this is an association-internal number — no UDP port is involved, and nothing on the network path ever sees it.'
+					'An integer from 0 through 65535; 5000 is the value commonly seen in WebRTC SDP. Since SCTP runs over DTLS over the ICE transport, this is an association-internal number — no UDP port is involved, and nothing on the network path ever sees it.'
 			}
 		]
 	},
@@ -376,7 +379,10 @@ Every identifier named here **MUST** have a matching "a=rid" line in the same me
 		syntax: 'sctpmap:<port> <app> <max-streams>',
 		level: 'media',
 		specs: [
-			{ label: 'RFC 8841 §5', href: 'https://datatracker.ietf.org/doc/html/rfc8841#section-5' }
+			{
+				label: 'draft-ietf-mmusic-sctp-sdp-05 §5.1',
+				href: 'https://datatracker.ietf.org/doc/html/draft-ietf-mmusic-sctp-sdp-05#section-5.1'
+			}
 		],
 		description:
 			'The pre-standard form of the data channel description, where `webrtc-datachannel` appeared as the "m=" line format and this attribute qualified it. Superseded by "a=sctp-port"; still emitted by older endpoints.',

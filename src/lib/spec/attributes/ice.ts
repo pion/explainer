@@ -26,20 +26,22 @@ export const ice: Record<string, Details> = {
 			{ label: 'RFC 8445 — ICE', href: 'https://datatracker.ietf.org/doc/html/rfc8445' }
 		],
 		description:
-			'One transport address this endpoint might be reachable at. Each peer gathers a set of candidates, sends them in — or after — its session description, and ICE pairs them up and probes every pair with STUN until it finds one that works.',
+			'One transport address this endpoint might be reachable at. Each peer gathers a set of candidates, sends them in — or after — its session description, and ICE forms candidate pairs and checks them with STUN in priority order until it can nominate a working path.',
 		args: [
 			{
 				name: 'foundation',
 				description:
-					'An opaque token that is identical for candidates of the same type, from the same base address, over the same protocol, and obtained from the same STUN or TURN server. Candidate pairs whose foundations match are redundant, so ICE only needs to freeze and probe one of them — this is what makes frozen-candidate pacing work.'
+					'An opaque token shared by candidates of the same type whose bases have the same IP address (their ports may differ), that use the same transport protocol and, for reflexive and relayed candidates, were obtained through a STUN or TURN server at the same IP address. A shared foundation groups checks that are likely to have the same fate; it does not make candidates redundant. A candidate is redundant only when both its transport address and its base equal those of another candidate.'
 			},
 			{
 				name: 'component-id',
-				description: 'Which component of the media stream this candidate is for.',
+				description:
+					'An integer from 1 through 256 identifying which component of the data stream this candidate is for.',
 				values: [
 					{
 						value: '1',
-						description: 'RTP. The only component present once "a=rtcp-mux" is in force.'
+						description:
+							'RTP for an RTP/RTCP stream. It is the only component needed when "a=rtcp-mux" is in force, although the absence of component 2 can also mean that RTCP is not used.'
 					},
 					{
 						value: '2',
@@ -62,44 +64,45 @@ export const ice: Record<string, Details> = {
 			{
 				name: 'priority',
 				description:
-					'A positive integer up to 2³¹−1, higher being preferred. It is computed as `(2²⁴ × type preference) + (2⁸ × local preference) + (256 − component ID)`, so candidate type dominates the ordering, the local preference breaks ties between interfaces, and RTP outranks RTCP. Both peers compute pair priorities from these numbers and check pairs in the same order.'
+					'A unique positive integer up to 2³¹−1, higher being preferred. ICE recommends (`SHOULD`) computing it as `(2²⁴ × type preference) + (2⁸ × local preference) + (256 − component ID)`; an agent may use another formula. With the recommended formula, candidate type dominates the ordering, local preference orders interfaces, and lower component IDs rank higher. Both peers compute pair priorities from these numbers and check pairs in the same order.'
 			},
 			{
 				name: 'connection-address',
 				description:
-					'The IP address of the candidate — an IPv4 or IPv6 literal, or an `.local` mDNS name used to keep private addresses out of the description.'
+					"The candidate address. RFC 8839's grammar admits IPv4, IPv6, and FQDNs; however, a base-RFC agent must not generate an FQDN and must ignore one it receives unless an extension defines its handling. The `.local` mDNS names seen in WebRTC are such extension behavior, used to avoid exposing private host addresses."
 			},
 			{ name: 'port', description: 'The port of the candidate.' },
 			{
 				name: 'cand-type',
-				description: 'How the candidate was obtained, which determines its type preference.',
+				description:
+					'How the candidate was obtained. An agent assigns one type-preference value to each candidate type.',
 				values: [
 					{
 						value: 'host',
 						description:
-							'An address on a local interface. Type preference 126 — the cheapest path, taken whenever both peers are on the same network.'
+							'An address on a local interface. The recommended type preference is 126, commonly favoring a direct path when one works.'
 					},
 					{
 						value: 'srflx',
 						description:
-							'Server reflexive: the public mapping of a host candidate as seen by a STUN server. Type preference 100. This is the candidate that gets a peer through most NATs.'
+							'Server reflexive: the public mapping of a host candidate as seen by a STUN server. The recommended type preference is 100. This is the candidate that gets a peer through most NATs.'
 					},
 					{
 						value: 'prflx',
 						description:
-							'Peer reflexive: a mapping discovered mid-check, when an incoming connectivity check arrives from an address neither peer had gathered. Type preference 110. It is never signalled in an offer — it can only be learned during checks.'
+							'Peer reflexive: a candidate learned during connectivity checks rather than candidate gathering. The recommended type preference is 110. It may be included in a subsequent offer if it was learned after the previous offer and before nomination.'
 					},
 					{
 						value: 'relay',
 						description:
-							"An address allocated on a TURN server, which forwards media on the endpoint's behalf. Type preference 0 — always last, because every packet costs the relay bandwidth, but it works when nothing else does."
+							"An address allocated on a TURN server, which forwards media on the endpoint's behalf. The recommended type preference is 0, making it a last resort because every packet costs the relay bandwidth, but it works when nothing else does."
 					}
 				]
 			},
 			{
 				name: 'rel-addr',
 				description:
-					'The related address: the base the candidate was derived from — the host address behind an `srflx` mapping, or the mapped address of a `relay`. Present for diagnostics only; ICE ignores it, and endpoints often set it to 0.0.0.0 to avoid revealing the private address.'
+					'The related address: the base an `srflx` or `prflx` candidate was derived from, or the mapped address of a `relay`. Present for diagnostics only; ICE ignores it, and endpoints often set it to 0.0.0.0 to avoid revealing the private address.'
 			},
 			{ name: 'rel-port', description: 'The port that goes with <rel-addr>.' },
 			{
@@ -114,22 +117,22 @@ export const ice: Record<string, Details> = {
 					{
 						value: 'generation',
 						description:
-							'A Google extension numbering ICE restarts, so stale candidates from a previous generation can be discarded.'
+							'A Libwebrtc extension numbering ICE restarts, so stale candidates from a previous generation can be discarded.'
 					},
 					{
 						value: 'ufrag',
 						description:
-							'The "a=ice-ufrag" this candidate belongs to. It ties a trickled candidate to the right ICE generation when an ICE restart is in flight.'
+							'The "a=ice-ufrag" this trickled candidate belongs to, used to correlate it with an ICE generation. This is not a core RFC 8839 field; RFC 8838 gives a candidate `ufrag` only as an example of how an SDP-based using protocol might perform that correlation, and libwebrtc emits it.'
 					},
 					{
 						value: 'network-id',
 						description:
-							'A Google extension identifying the local interface the candidate came from.'
+							'A Libwebrtc extension identifying the local interface the candidate came from.'
 					},
 					{
 						value: 'network-cost',
 						description:
-							'A Google extension hinting at how expensive the interface is — low for Ethernet and Wi-Fi, high for cellular — so a peer can avoid metered links.'
+							'A Libwebrtc extension hinting at how expensive the interface is — low for Ethernet and Wi-Fi, high for cellular — so a peer can avoid metered links.'
 					}
 				]
 			},
@@ -144,7 +147,7 @@ A full candidate line reads as one sentence: \`candidate:1 1 udp 2130706431 192.
 		syntax: 'end-of-candidates',
 		level: 'both',
 		specs: [
-			{ label: 'RFC 8838 §10', href: 'https://datatracker.ietf.org/doc/html/rfc8838#section-10' }
+			{ label: 'RFC 8840 §8', href: 'https://www.rfc-editor.org/rfc/rfc8840.html#section-8' }
 		],
 		description:
 			'A property attribute stating that the endpoint has finished gathering candidates for this generation and will send no more.',
@@ -162,7 +165,7 @@ A full candidate line reads as one sentence: \`candidate:1 1 udp 2130706431 192.
 			{
 				name: 'ufrag',
 				description:
-					'At least 24 bits of randomness, 4–256 characters. It must be unique among the sessions an endpoint has in flight, because it is what demultiplexes arriving STUN checks.'
+					'At least 24 bits of randomness and 4–32 characters when sent. The grammar allows 4–256 characters so receivers can accept values up to 256. It must be unique among the sessions an endpoint has in flight, because it is what demultiplexes arriving STUN checks.'
 			}
 		],
 		details: `Changing the ufrag and password is an **ICE restart**: it invalidates every existing candidate pair and starts connectivity checks over. That is how a call recovers when a device moves between networks.`
@@ -173,7 +176,7 @@ A full candidate line reads as one sentence: \`candidate:1 1 udp 2130706431 192.
 		level: 'both',
 		specs: [rfc8839('5.4')],
 		description:
-			'The shared secret that STUN connectivity checks for this media are authenticated with, using the short-term credential mechanism.',
+			'The password this agent advertises for the peer to use when authenticating STUN connectivity checks sent toward this agent, using the short-term credential mechanism.',
 		args: [
 			{
 				name: 'password',
@@ -203,12 +206,12 @@ A full candidate line reads as one sentence: \`candidate:1 1 udp 2130706431 192.
 					{
 						value: 'ice2',
 						description:
-							'The endpoint implements ICE as revised by [RFC 8445](https://datatracker.ietf.org/doc/html/rfc8445), rather than the original RFC 5245 aggressive-nomination behaviour.'
+							'The endpoint implements ICE as revised by [RFC 8445](https://datatracker.ietf.org/doc/html/rfc8445). Its absence lets a peer assume the older RFC 5245 behaviour.'
 					},
 					{
 						value: 'renomination',
 						description:
-							'A Google extension letting the controlling agent nominate a better pair after one has already been selected, so a call can migrate to a cheaper path mid-session.'
+							'A Libwebrtc extension letting the controlling agent nominate a better pair after one has already been selected, so a call can migrate to a cheaper path mid-session.'
 					},
 					{
 						value: 'rtp+ecn',
@@ -223,13 +226,13 @@ A full candidate line reads as one sentence: \`candidate:1 1 udp 2130706431 192.
 		title: 'ICE Lite',
 		syntax: 'ice-lite',
 		level: 'session',
-		specs: [rfc8839('5.7')],
+		specs: [rfc8839('5.3')],
 		description:
 			'The endpoint implements only the lite variant of ICE: it gathers host candidates, answers connectivity checks, and never sends any of its own.',
 		args: [],
 		details: `Lite implementations are for endpoints with a public address and no NAT to traverse — SFUs, gateways, conference bridges. The full implementation on the other side always takes the controlling role and does all the probing.
 
-If both peers are lite, there is nothing to check; the single candidate pair is simply used.`
+If both peers are lite, they exchange candidates but send no connectivity checks. The offerer takes the controlling role and selects a pair for each component; more than one pair can initially be possible, for example when the agents offer different address families.`
 	},
 	'ice-pacing': {
 		title: 'ICE Pacing',
@@ -237,7 +240,7 @@ If both peers are lite, there is nothing to check; the single candidate pair is 
 		level: 'session',
 		specs: [rfc8839('5.5')],
 		description:
-			"The interval, in milliseconds, this endpoint will leave between the STUN transactions it sends. The larger of the two peers' values applies.",
+			"The desired connectivity-check pacing interval (`Ta`), in milliseconds. The larger of the two peers' values applies.",
 		args: [
 			{
 				name: 'pacing-value',
@@ -250,11 +253,11 @@ If both peers are lite, there is nothing to check; the single candidate pair is 
 		title: 'ICE Mismatch',
 		syntax: 'ice-mismatch',
 		level: 'media',
-		specs: [rfc8839('5.8')],
+		specs: [rfc8839('5.3')],
 		description:
 			'Sent in an answer to report that the default destination in the offer\'s "c=" and "m=" lines did not match any of the candidates that accompanied it.',
 		args: [],
-		details: `It is the symptom of a signalling intermediary — an ALG or a B2BUA — having rewritten the address in the description without understanding the candidate attributes. ICE is abandoned for that media description rather than run against addresses that are known to be inconsistent.`
+		details: `A signalling intermediary such as an ALG or B2BUA rewriting the default address without understanding candidate attributes is a common cause, but the attribute reports the mismatch rather than its cause. ICE is abandoned for that media description rather than run against addresses that are known to be inconsistent.`
 	},
 	'remote-candidates': {
 		title: 'Remote Candidates',
@@ -272,6 +275,6 @@ If both peers are lite, there is nothing to check; the single candidate pair is 
 			},
 			{ name: 'port', description: 'The port of the remote candidate that was selected.' }
 		],
-		details: `This only appears in the regular-nomination flow of a full ICE agent doing an updated offer. WebRTC endpoints do not use it.`
+		details: `A controlling full agent includes this in a completed subsequent offer after nomination. A controlling lite agent must also include it when both agents are lite. Its original purpose is to resolve the race in which an updated offer arrives before the Binding response that would add the selected pair to the controlled agent's valid list. JSEP endpoints parse the attribute but [ignore its values](https://www.rfc-editor.org/rfc/rfc9429.html#section-5.8.2).`
 	}
 };

@@ -95,12 +95,12 @@ The DTLS role also decides SRTP key derivation — client and server take differ
 	'tls-id': {
 		title: 'TLS Identifier',
 		syntax: 'tls-id:<identifier>',
-		level: 'both',
+		level: 'media',
 		specs: [
-			{ label: 'RFC 8842 §5', href: 'https://datatracker.ietf.org/doc/html/rfc8842#section-5' }
+			{ label: 'RFC 8842 §4', href: 'https://datatracker.ietf.org/doc/html/rfc8842#section-4' }
 		],
 		description:
-			'A unique identifier for the DTLS association. It tells a peer whether a renegotiation intends to keep the existing DTLS connection or to replace it.',
+			"One endpoint's half of the identifier for a DTLS association. The pair of values from the offerer and answerer identifies the association and signals whether it should be reused or replaced.",
 		args: [
 			{
 				name: 'identifier',
@@ -163,7 +163,7 @@ The DTLS role also decides SRTP key derivation — client and server take differ
 		syntax: 'identity:<assertion-value> [<extension>]...',
 		level: 'session',
 		specs: [
-			{ label: 'RFC 8827 §5.6', href: 'https://datatracker.ietf.org/doc/html/rfc8827#section-5.6' }
+			{ label: 'RFC 8827 §5', href: 'https://datatracker.ietf.org/doc/html/rfc8827#section-5' }
 		],
 		description:
 			'A signed assertion from an identity provider binding a real-world identity to the "a=fingerprint" in this description.',
@@ -174,7 +174,8 @@ The DTLS role also decides SRTP key derivation — client and server take differ
 			},
 			{
 				name: 'extension',
-				description: 'An extension attribute, currently only `algorithm` and `provider`.'
+				description:
+					'An optional extension attribute. RFC 8827 defines the extension syntax but no extension names.'
 			}
 		],
 		details: `The fingerprint proves that the media comes from whoever wrote the description. It does not say who that is — the signalling server could have substituted its own. An identity assertion closes that gap: the browser verifies it against the identity provider directly, so a compromised signalling server cannot impersonate a user without also compromising their IdP.`
