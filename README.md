@@ -31,5 +31,28 @@ Check out the [contributing wiki](https://github.com/pion/webrtc/wiki/Contributi
 
 * [Julia Roman](https://github.com/Julia-Roman) - *Original Author*
 
+### Building
+This project is built with [SvelteKit](https://kit.svelte.dev/) and [Vite](https://vitejs.dev/).
+
+Install dependencies:
+```sh
+npm install
+```
+
+Run a local development server:
+```sh
+npm run dev
+```
+
+Build for production:
+```sh
+npm run build
+```
+
+Preview the production build locally:
+```sh
+npm run preview
+```
+
 ### License
 MIT License - see [LICENSE](LICENSE) for full text
