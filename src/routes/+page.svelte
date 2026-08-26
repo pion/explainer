@@ -18,6 +18,10 @@ SPDX-License-Identifier: MIT
 	let ghostEl = $state<HTMLDivElement>();
 	let viewportEl = $state<HTMLDivElement>();
 
+	// The section marker is drawn outside the scrolling overlay, so it has to be
+	// offset by hand to stay level with the lines it spans.
+	let scrollTop = $state(0);
+
 	let sdpText = $state(exampleSDP);
 	let caret = $state(0);
 	let hover = $state<SDPLocation | null>(null);
@@ -71,6 +75,27 @@ SPDX-License-Identifier: MIT
 			(value) => value.value.toLowerCase() === activeField?.text.toLowerCase()
 		)
 	);
+
+	// The run of lines making up the media description the active line belongs to,
+	// marked in the gutter so the block a line is read against is visible without
+	// scanning upwards for the "m=" that opened it. Session-level lines are the
+	// preamble rather than a section, so they get no marker.
+	let sectionSpan = $derived.by(() => {
+		const section = active ? lines[active.lineIndex]?.section : null;
+		if (section == null) return null;
+
+		let first = -1;
+		let last = -1;
+		lines.forEach((line, i) => {
+			if (line.section !== section) return;
+			if (first === -1) first = i;
+			// Blank lines trailing the section say nothing about it, so the marker
+			// stops at the last line that does.
+			if (line.content.trim()) last = i;
+		});
+
+		return first === -1 ? null : { first, count: Math.max(last, first) - first + 1 };
+	});
 
 	// Where this line sits, which is what decides whether "a=" lines are in scope.
 	let placement = $derived(
@@ -206,6 +231,7 @@ SPDX-License-Identifier: MIT
 		if (!ghostEl || !editorEl) return;
 		ghostEl.scrollTop = editorEl.scrollTop;
 		ghostEl.scrollLeft = editorEl.scrollLeft;
+		scrollTop = editorEl.scrollTop;
 		// Scrolling moves the text under a stationary pointer.
 		syncHover();
 		placeTooltip();
@@ -343,6 +369,22 @@ SPDX-License-Identifier: MIT
 			class="relative overflow-hidden rounded-[5px] border border-hairline bg-surface transition-colors focus-within:border-subtle-outline"
 			bind:this={viewportEl}
 		>
+			<!--
+				The outer layer clips the marker to the editor; the inner one carries the
+				scroll offset, so only a change of section animates and scrolling stays
+				pinned to the text.
+			-->
+			<div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+				<div style="transform: translateY({-scrollTop}px);">
+					{#if sectionSpan}
+						<div
+							class="absolute left-[5px] w-[2px] rounded-full bg-token-type opacity-60 transition-[top,height] duration-150"
+							style="top: calc(var(--sdp-padding) + {sectionSpan.first} * var(--sdp-line-height)); height: calc({sectionSpan.count} * var(--sdp-line-height));"
+						></div>
+					{/if}
+				</div>
+			</div>
+
 			<div
 				class="sdp-layer pointer-events-none absolute inset-0 overflow-hidden"
 				aria-hidden="true"

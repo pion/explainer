@@ -57,6 +57,9 @@
 	color-scheme: light dark;
 	font-family: var(--font-sans);
 	font-size: 18px;
+
+	--sdp-padding: 0.75rem;
+	--sdp-line-height: 24px;
 }
 
 body {
@@ -100,19 +103,21 @@ code {
 /*
  * The editor stacks a transparent textarea over a highlighted overlay, so both
  * layers must share identical text metrics or the caret drifts away from the
- * glyphs beneath it. Defining them once here is what keeps them honest.
+ * glyphs beneath it. Defining them once here is what keeps them honest — the
+ * two metrics the section marker measures itself against are named, so that
+ * marker cannot drift out of step with the text either.
  */
 .sdp-layer {
-	padding: 0.75rem;
+	padding: var(--sdp-padding);
 	font-family: var(--font-mono);
 	font-size: 16px;
-	line-height: 24px;
+	line-height: var(--sdp-line-height);
 	white-space: pre;
 	tab-size: 2;
 }
 
 .sdp-line {
-	height: 24px;
+	height: var(--sdp-line-height);
 }
 
 /* The wordmark is drawn with fill="currentColor"; the dot keeps the brand red. */
