@@ -1,0 +1,34 @@
+<!--
+SPDX-FileCopyrightText: 2026 The Pion community <https://pion.ly>
+
+SPDX-License-Identifier: MIT
+-->
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#e53935" />
+		<script>
+			// Resolve the colour scheme before first paint so the page never flashes
+			// the wrong theme. Mirrors the key used by src/lib/theme.svelte.ts.
+			(function () {
+				var theme;
+				try {
+					theme = localStorage.getItem('sdp-explainer-theme');
+				} catch (e) {
+					/* storage blocked */
+				}
+				if (theme !== 'light' && theme !== 'dark') {
+					theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+				}
+				document.documentElement.style.colorScheme = theme;
+			})();
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
