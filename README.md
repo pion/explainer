@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 <br>
 
 ### Community
+
 Pion has an active community on the [Discord](https://discord.gg/PngbdqpFbt).
 
 Follow the [Pion Bluesky](https://bsky.app/profile/pion.ly) or [Pion Twitter](https://twitter.com/_pion) for project updates and important WebRTC news.
@@ -27,32 +28,39 @@ We are always looking to support **your projects**. Please reach out if you have
 If you need commercial support or don't want to use public methods you can contact us at [team@pion.ly](mailto:team@pion.ly)
 
 ### Contributing
+
 Check out the [contributing wiki](https://github.com/pion/webrtc/wiki/Contributing) to join the group of amazing people making this project possible
 
-* [Julia Roman](https://github.com/Julia-Roman) - *Original Author*
+- [Julia Roman](https://github.com/Julia-Roman) - _Original Author_
 
 ### Building
+
 This project is built with [SvelteKit](https://kit.svelte.dev/) and [Vite](https://vitejs.dev/).
 
 Install dependencies:
+
 ```sh
 npm install
 ```
 
 Run a local development server:
+
 ```sh
 npm run dev
 ```
 
 Build for production:
+
 ```sh
 npm run build
 ```
 
 Preview the production build locally:
+
 ```sh
 npm run preview
 ```
 
 ### License
+
 MIT License - see [LICENSE](LICENSE) for full text
