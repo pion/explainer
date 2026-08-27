@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 				if (theme !== 'light' && theme !== 'dark') {
 					theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 				}
-				document.documentElement.style.colorScheme = theme;
+				document.documentElement.dataset.theme = theme;
 			})();
 		</script>
 		%sveltekit.head%
