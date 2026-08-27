@@ -16,15 +16,16 @@ const createTheme = () => {
 
 		/** Adopts whatever the bootstrap script in app.html resolved before paint. */
 		hydrate() {
-			current = document.documentElement.style.colorScheme === 'light' ? 'light' : 'dark';
+			current = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 		},
 
 		toggle() {
 			current = current === 'dark' ? 'light' : 'dark';
 
-			// Every colour in the stylesheet is a light-dark() pair, so setting the
-			// scheme on :root is the whole theme switch.
-			document.documentElement.style.colorScheme = current;
+			// Every colour in the stylesheet is a light-dark() pair resolved against
+			// the color-scheme layout.css binds to this attribute, so flipping it is
+			// the whole theme switch.
+			document.documentElement.dataset.theme = current;
 
 			try {
 				localStorage.setItem(THEME_KEY, current);
