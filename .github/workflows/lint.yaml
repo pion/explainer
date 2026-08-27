@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2026 The Pion community <https://pion.ly>
+#
+# SPDX-License-Identifier: MIT
+
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run check
