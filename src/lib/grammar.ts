@@ -50,7 +50,7 @@ const parseAtoms = (text: string): Atom[] => {
 		literal = '';
 	};
 
-	for (let i = 0; i < text.length; ) {
+	for (let i = 0; i < text.length;) {
 		const char = text[i];
 
 		if (char === '[' || char === ']') {

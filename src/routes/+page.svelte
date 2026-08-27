@@ -429,8 +429,7 @@ SPDX-License-Identifier: MIT
 					focused = true;
 					syncCaret();
 				}}
-				onblur={() => (focused = false)}
-			></textarea>
+				onblur={() => (focused = false)}></textarea>
 		</div>
 
 		<aside class="min-h-0 overflow-y-auto lg:pr-2">
