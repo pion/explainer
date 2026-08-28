@@ -651,6 +651,7 @@ SPDX-License-Identifier: MIT
 			</div>
 
 			<div
+				inert
 				class="sdp-layer pointer-events-none overflow-hidden"
 				aria-hidden="true"
 				bind:this={ghostEl}
