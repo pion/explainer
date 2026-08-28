@@ -211,8 +211,44 @@ SPDX-License-Identifier: MIT
 		];
 	};
 
+	// Extending a selection (Shift+arrow) leaves `selectionStart` pinned at the
+	// fixed anchor — the end actually moving is whichever one `selectionEnd`
+	// is when growing forward, `selectionStart` when growing backward. Reading
+	// plain `selectionStart` while shift-selecting downward would keep tracking
+	// the anchor's line instead of the one the selection is growing toward.
+	const selectionFocus = (el: HTMLTextAreaElement) =>
+		el.selectionDirection === 'backward' ? el.selectionStart : el.selectionEnd;
+
 	const syncCaret = () => {
-		if (editorEl) caret = editorEl.selectionStart;
+		if (editorEl) caret = selectionFocus(editorEl);
+	};
+
+	// How many lines of lookahead a keyboard-driven caret keeps between itself
+	// and the edge of the viewport, so the next few lines it's heading toward
+	// are already on screen rather than arriving one keystroke at a time.
+	const SCROLL_MARGIN = 5;
+
+	const applyScrollMargin = () => {
+		if (!editorEl) return;
+
+		const location = locate(lines, selectionFocus(editorEl));
+		if (!location) return;
+
+		// Capped at half the viewport, so a margin wider than the editor is
+		// tall can't force the top and bottom checks to fight each other.
+		const margin = Math.min(SCROLL_MARGIN * lineHeight, (editorEl.clientHeight - lineHeight) / 2);
+
+		const caretTop = padding + location.lineIndex * lineHeight;
+		const caretBottom = caretTop + lineHeight;
+
+		const minScrollTop = caretBottom + margin - editorEl.clientHeight;
+		const maxScrollTop = caretTop - margin;
+
+		if (editorEl.scrollTop < minScrollTop) {
+			editorEl.scrollTop = Math.min(minScrollTop, editorEl.scrollHeight - editorEl.clientHeight);
+		} else if (editorEl.scrollTop > maxScrollTop) {
+			editorEl.scrollTop = Math.max(0, maxScrollTop);
+		}
 	};
 
 	/**
@@ -650,8 +686,35 @@ SPDX-License-Identifier: MIT
 				oninput={() => {
 					usingKeyboard = true;
 					syncCaret();
+					// Typing, pasting, or a newline all fire here synchronously, in the
+					// same task as the browser's own bare-minimum auto-scroll — unlike
+					// pure caret navigation, there's no risk of reading a stale caret,
+					// so the margin correction lands before this task's own paint
+					// instead of waiting for the keydown-scheduled one a frame later.
+					applyScrollMargin();
 				}}
-				onkeydown={() => (usingKeyboard = true)}
+				onkeydown={(event) => {
+					usingKeyboard = true;
+					if (
+						event.key !== 'Shift' &&
+						event.key !== 'Control' &&
+						event.key !== 'Alt' &&
+						event.key !== 'Meta'
+					) {
+						// Queued rather than run straight from the selectionchange event,
+						// which Chrome dispatches as its own later task: by then the
+						// browser has already painted its own bare-minimum auto-scroll,
+						// so correcting the margin there lands a frame late and reads as
+						// two scrolls. rAF still runs after this key's default action (the
+						// caret move and that auto-scroll) but before the next paint, so
+						// only the corrected position is ever shown. A microtask is too
+						// early here — for pure caret navigation Chrome can still be
+						// mid-way through moving the selection at that point.
+						requestAnimationFrame(() => {
+							if (document.activeElement === editorEl) applyScrollMargin();
+						});
+					}
+				}}
 				onclick={() => {
 					usingKeyboard = true;
 					syncCaret();
