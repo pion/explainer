@@ -26,10 +26,27 @@ const inline = (text: string) =>
 				: match
 		);
 
-export const markdown = (text: string) =>
+const render = (text: string) =>
 	text
 		.split(/\n{2,}/)
 		.map((paragraph) => paragraph.trim())
 		.filter(Boolean)
 		.map((paragraph) => `<p class="mt-2 first:mt-0">${inline(paragraph)}</p>`)
 		.join('');
+
+// The panel re-renders every prose block it shows each time the active token
+// changes — which, on hover, is as often as the pointer crosses a field. The
+// input is drawn from the fixed set of strings in the spec, so rendering each
+// one once and keeping it costs a bounded amount of memory.
+const rendered = new Map<string, string>();
+
+export const markdown = (text: string) => {
+	let html = rendered.get(text);
+
+	if (html === undefined) {
+		html = render(text);
+		rendered.set(text, html);
+	}
+
+	return html;
+};

@@ -8,19 +8,31 @@ SPDX-License-Identifier: MIT
 	import pionLogo from '$lib/assets/pion-logo.svg?raw';
 	import { syntaxParts } from '$lib/grammar';
 	import { markdown } from '$lib/markdown';
-	import { locate, parseSDP } from '$lib/parser';
+	import { locate, outlineOf, parseSDP } from '$lib/parser';
 	import { exampleSDP } from '$lib/spec';
 	import { theme } from '$lib/theme.svelte';
 	import type { SDPLocation, SDPPart } from '$lib/types';
+	import { tick } from 'svelte';
 	import { fade } from 'svelte/transition';
 
 	let editorEl = $state<HTMLTextAreaElement>();
 	let ghostEl = $state<HTMLDivElement>();
+	let rowsEl = $state<HTMLDivElement>();
 	let viewportEl = $state<HTMLDivElement>();
 
 	// The section marker is drawn outside the scrolling overlay, so it has to be
 	// offset by hand to stay level with the lines it spans.
 	let scrollTop = $state(0);
+
+	// Row geometry, read back from the CSS both layers already share rather than
+	// repeated here, so the overlay cannot drift out of step with the text.
+	let lineHeight = $state(24);
+	let padding = $state(0);
+	let ghostHeight = $state(0);
+
+	// Rows built above and below the visible ones, so a scroll has something to
+	// show before the next render catches up.
+	const OVERSCAN = 8;
 
 	let sdpText = $state(exampleSDP);
 	let caret = $state(0);
@@ -34,6 +46,16 @@ SPDX-License-Identifier: MIT
 	let usingKeyboard = $state(false);
 
 	let lines = $derived(parseSDP(sdpText));
+	let outline = $derived(outlineOf(lines));
+
+	// The editor never wraps and every line is one row of a known height, so
+	// which rows are on screen is arithmetic rather than something to measure.
+	// Only those are built: a description of ten thousand lines costs the same
+	// to render as one of fifty, and the spans the overlay does build are few
+	// enough that re-styling them all as the pointer moves stays free.
+	let firstRow = $derived(Math.max(0, Math.floor((scrollTop - padding) / lineHeight) - OVERSCAN));
+	let rowCount = $derived(Math.ceil(ghostHeight / lineHeight) + OVERSCAN * 2 + 1);
+	let rows = $derived(lines.slice(firstRow, firstRow + rowCount));
 	let active = $derived((usingKeyboard ? null : hover) ?? locate(lines, caret));
 
 	// Where the caret sits, independent of whatever the mouse is doing. This
@@ -82,19 +104,7 @@ SPDX-License-Identifier: MIT
 	// preamble rather than a section, so they get no marker.
 	let sectionSpan = $derived.by(() => {
 		const section = active ? lines[active.lineIndex]?.section : null;
-		if (section == null) return null;
-
-		let first = -1;
-		let last = -1;
-		lines.forEach((line, i) => {
-			if (line.section !== section) return;
-			if (first === -1) first = i;
-			// Blank lines trailing the section say nothing about it, so the marker
-			// stops at the last line that does.
-			if (line.content.trim()) last = i;
-		});
-
-		return first === -1 ? null : { first, count: Math.max(last, first) - first + 1 };
+		return section == null ? null : (outline.sections.get(section) ?? null);
 	});
 
 	// Where this line sits, which is what decides whether "a=" lines are in scope.
@@ -146,17 +156,24 @@ SPDX-License-Identifier: MIT
 			: caretLocation.fieldIndex === part.fieldIndex;
 	};
 
+	// Rows exist only for the slice of the document on screen, so a line's element
+	// sits at its offset within that slice — and is simply absent once the line is
+	// scrolled far enough out of view, which is exactly when nothing anchored to
+	// it should be shown either.
+	const lineElement = (lineIndex: number): Element | null =>
+		rowsEl?.children[lineIndex - firstRow] ?? null;
+
 	// Found by indexing straight into the DOM from `debouncedActive` rather than
 	// querying for a marker attribute: the marker is written by the same render
 	// pass that this effect can run ahead of, which left the tooltip measuring
-	// last render's anchor. The span layout itself never lags — only classes and
-	// attributes do — so indexing is safe the instant `debouncedActive` changes.
+	// last render's anchor. The span layout itself never lags — only classes do —
+	// so indexing is safe the instant `debouncedActive` changes.
 	const tooltipAnchorEl = (): Element | null => {
-		if (!debouncedActive || !ghostEl) return null;
+		if (!debouncedActive) return null;
 		const { lineIndex, fieldIndex } = debouncedActive;
 
 		const parts = lines[lineIndex]?.parts;
-		const lineEl = ghostEl.children[lineIndex];
+		const lineEl = lineElement(lineIndex);
 		if (!parts || !lineEl) return null;
 
 		const p = parts.findIndex(
@@ -192,12 +209,16 @@ SPDX-License-Identifier: MIT
 	 * the same height, which turns the vertical search into one division.
 	 */
 	const locatePoint = (x: number, y: number): SDPLocation | null => {
-		const first = ghostEl?.children[0]?.getBoundingClientRect();
-		if (!first?.height) return null;
+		if (!rowsEl) return null;
 
-		const lineIndex = Math.floor((y - first.top) / first.height);
-		const lineEl = ghostEl?.children[lineIndex];
-		if (!lineEl || lineIndex < 0 || lineIndex >= lines.length) return null;
+		// The rows begin at `firstRow` and are a fixed height, so one measurement
+		// of where they start answers the vertical half outright.
+		const top = rowsEl.getBoundingClientRect().top;
+		const lineIndex = firstRow + Math.floor((y - top) / lineHeight);
+		if (lineIndex < 0 || lineIndex >= lines.length) return null;
+
+		const lineEl = lineElement(lineIndex);
+		if (!lineEl) return null;
 
 		// Parts are rendered one span each, so a span's position is its part's index.
 		const parts = lines[lineIndex].parts;
@@ -216,15 +237,40 @@ SPDX-License-Identifier: MIT
 		hover = pointer ? locatePoint(pointer.x, pointer.y) : null;
 	};
 
+	// mousemove fires several times per frame and every hit test reads layout back
+	// out of the DOM, so the pointer is only recorded here and resolved once, just
+	// before the frame that would show the result.
+	let hoverFrame = 0;
+
 	const onPointerMove = (event: MouseEvent) => {
 		pointer = { x: event.clientX, y: event.clientY };
 		usingKeyboard = false;
-		syncHover();
+
+		if (hoverFrame) return;
+		hoverFrame = requestAnimationFrame(() => {
+			hoverFrame = 0;
+			syncHover();
+		});
 	};
 
 	const onPointerLeave = () => {
 		pointer = null;
 		hover = null;
+	};
+
+	// Scrolling moves the text under a stationary pointer and swaps out which rows
+	// exist at all. Both the hit test and the tooltip anchor measure those rows, so
+	// they have to wait for the new offset to render rather than read the old one.
+	let syncPending = false;
+
+	const syncAfterRender = () => {
+		if (syncPending) return;
+		syncPending = true;
+		tick().then(() => {
+			syncPending = false;
+			syncHover();
+			placeTooltip();
+		});
 	};
 
 	const syncScroll = () => {
@@ -249,9 +295,7 @@ SPDX-License-Identifier: MIT
 		// The section marker is drawn against the ghost's own line coordinates,
 		// so it has to follow the ghost's (corrected) offset, not the editor's.
 		scrollTop = ghostEl.scrollTop;
-		// Scrolling moves the text under a stationary pointer.
-		syncHover();
-		placeTooltip();
+		syncAfterRender();
 	};
 
 	const placeTooltip = () => {
@@ -277,17 +321,37 @@ SPDX-License-Identifier: MIT
 		showTooltip = true;
 	};
 
+	// The row height and the padding above the first row are what the visible
+	// slice is counted off in, so they are taken from the rendered overlay rather
+	// than restated as numbers that could fall out of step with the stylesheet.
+	const measureRows = () => {
+		if (!ghostEl) return;
+
+		const style = getComputedStyle(ghostEl);
+		lineHeight = parseFloat(style.lineHeight) || lineHeight;
+		padding = parseFloat(style.paddingTop) || 0;
+	};
+
 	$effect(() => theme.hydrate());
 
-	// Anything that moves the editor invalidates the measured anchor.
+	// Anything that moves or resizes the editor invalidates the measured anchor,
+	// and a resize can also change the metrics the rows are counted off in.
 	$effect(() => {
+		void ghostEl;
+		measureRows();
+
 		const reposition = () => placeTooltip();
+		const remeasure = () => {
+			measureRows();
+			placeTooltip();
+		};
 
 		window.addEventListener('scroll', reposition, true);
-		window.addEventListener('resize', reposition);
+		window.addEventListener('resize', remeasure);
 		return () => {
 			window.removeEventListener('scroll', reposition, true);
-			window.removeEventListener('resize', reposition);
+			window.removeEventListener('resize', remeasure);
+			cancelAnimationFrame(hoverFrame);
 		};
 	});
 
@@ -304,8 +368,10 @@ SPDX-License-Identifier: MIT
 	$effect(() => {
 		// Re-measure once the overlay has re-rendered. This tracks `debouncedActive`
 		// rather than just the tooltip text, because neighbouring lines often share
-		// a tooltip ("Attribute") and the anchor still has to move between them.
-		void [debouncedActive, tooltip, sdpText, focused];
+		// a tooltip ("Attribute") and the anchor still has to move between them;
+		// and `rows`, because the anchor's element only exists while its line is
+		// one of the ones built.
+		void [debouncedActive, tooltip, rows, focused];
 		placeTooltip();
 	});
 
@@ -403,14 +469,30 @@ SPDX-License-Identifier: MIT
 			</div>
 
 			<div
-				class="sdp-layer pointer-events-none absolute inset-0 overflow-hidden"
+				class="sdp-layer sdp-overlay pointer-events-none absolute inset-0 overflow-hidden"
 				aria-hidden="true"
 				bind:this={ghostEl}
+				bind:clientHeight={ghostHeight}
 			>
-				<!-- prettier-ignore -->
-				{#each lines as line, i (i)}
-					<div class={['sdp-line w-fit min-w-full rounded-sm', active?.lineIndex === i && line.content && 'bg-line-highlight']}>{#each line.parts as part, p (p)}<span class={partClass(i, part)} data-active={isActivePart(i, part) || undefined}>{part.text}</span>{/each}</div>
-				{/each}
+				<!--
+					The spacer stands in for every line that was not built, so the overlay
+					still scrolls exactly as far as the textarea does and `syncScroll`'s
+					two ends stay comparable. Its width is given in `ch` — one character
+					of the monospace face both layers share — which reserves the longest
+					line's room without that line having to exist.
+				-->
+				<div
+					class="w-max whitespace-normal"
+					style="min-width: {outline.columns}ch; height: {lines.length * lineHeight}px;"
+				>
+					<div bind:this={rowsEl} style="transform: translateY({firstRow * lineHeight}px);">
+						{#each rows as line, r (firstRow + r)}
+							{@const i = firstRow + r}
+							<!-- prettier-ignore -->
+							<div class={['sdp-line w-fit min-w-full rounded-sm', active?.lineIndex === i && line.content && 'bg-line-highlight']}>{#each line.parts as part, p (p)}<span class={partClass(i, part)}>{part.text}</span>{/each}</div>
+						{/each}
+					</div>
+				</div>
 			</div>
 
 			{#if sdpText === ''}
