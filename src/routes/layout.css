@@ -155,6 +155,14 @@ code {
  */
 .sdp-editor {
 	scrollbar-width: none;
+
+	/*
+	 * Without this, flinging or holding a scroll past either edge rubber-bands
+	 * the content and springs it back, which reads as a jump rather than the
+	 * scroll simply stopping. The ghost overlay is driven off this element's
+	 * own scrollTop/scrollLeft, so a bounce here would drag it along too.
+	 */
+	overscroll-behavior: contain;
 }
 
 .sdp-editor::-webkit-scrollbar {
