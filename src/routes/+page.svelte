@@ -229,9 +229,26 @@ SPDX-License-Identifier: MIT
 
 	const syncScroll = () => {
 		if (!ghostEl || !editorEl) return;
-		ghostEl.scrollTop = editorEl.scrollTop;
-		ghostEl.scrollLeft = editorEl.scrollLeft;
-		scrollTop = editorEl.scrollTop;
+
+		// A <textarea>'s own text layout is native, not CSS boxes, so under a
+		// fractional browser zoom it can round each line/character advance to a
+		// slightly different device pixel than the plain overlay does. That
+		// makes the two elements' total scrollable size drift apart by a little
+		// more per line, invisible on a few lines but visible once there's a
+		// lot to scroll through. Mapping by scroll *fraction* rather than
+		// copying the raw offset keeps both ends exactly pinned regardless of
+		// that drift, instead of copying an offset that means something
+		// slightly different in each element.
+		const vRange = editorEl.scrollHeight - editorEl.clientHeight;
+		const hRange = editorEl.scrollWidth - editorEl.clientWidth;
+		const ghostVRange = ghostEl.scrollHeight - ghostEl.clientHeight;
+		const ghostHRange = ghostEl.scrollWidth - ghostEl.clientWidth;
+
+		ghostEl.scrollTop = vRange > 0 ? (editorEl.scrollTop / vRange) * ghostVRange : 0;
+		ghostEl.scrollLeft = hRange > 0 ? (editorEl.scrollLeft / hRange) * ghostHRange : 0;
+		// The section marker is drawn against the ghost's own line coordinates,
+		// so it has to follow the ghost's (corrected) offset, not the editor's.
+		scrollTop = ghostEl.scrollTop;
 		// Scrolling moves the text under a stationary pointer.
 		syncHover();
 		placeTooltip();
