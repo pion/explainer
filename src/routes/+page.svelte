@@ -48,6 +48,12 @@ SPDX-License-Identifier: MIT
 	let lines = $derived(parseSDP(sdpText));
 	let outline = $derived(outlineOf(lines));
 
+	// Wide enough for the highest line number there is. Left as a `ch` expression
+	// rather than measured back in pixels, so the column the numbers sit in and
+	// the edge the text starts at are the same fractional width, not two roundings
+	// of it.
+	let digits = $derived(String(lines.length).length);
+
 	// The editor never wraps and every line is one row of a known height, so
 	// which rows are on screen is arithmetic rather than something to measure.
 	// Only those are built: a description of ten thousand lines costs the same
@@ -56,6 +62,9 @@ SPDX-License-Identifier: MIT
 	let firstRow = $derived(Math.max(0, Math.floor((scrollTop - padding) / lineHeight) - OVERSCAN));
 	let rowCount = $derived(Math.ceil(ghostHeight / lineHeight) + OVERSCAN * 2 + 1);
 	let rows = $derived(lines.slice(firstRow, firstRow + rowCount));
+
+	// The numbers standing against those rows, one-based the way an editor counts.
+	let numbers = $derived(Array.from({ length: rows.length }, (_, r) => firstRow + r + 1));
 	let active = $derived((usingKeyboard ? null : hover) ?? locate(lines, caret));
 
 	// Where the caret sits, independent of whatever the mouse is doing. This
@@ -106,6 +115,10 @@ SPDX-License-Identifier: MIT
 		const section = active ? lines[active.lineIndex]?.section : null;
 		return section == null ? null : (outline.sections.get(section) ?? null);
 	});
+
+	// The line the band runs across. A blank line has nothing to mark, so it gets
+	// no band even while the pointer is over it.
+	let highlightRow = $derived(active && lines[active.lineIndex]?.content ? active.lineIndex : null);
 
 	// Where this line sits, which is what decides whether "a=" lines are in scope.
 	let placement = $derived(
@@ -540,19 +553,47 @@ SPDX-License-Identifier: MIT
 		class="grid min-h-0 grid-rows-[minmax(0,3fr)_minmax(0,2fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:grid-rows-[minmax(0,1fr)]"
 	>
 		<div
-			class="relative overflow-hidden rounded-[5px] border border-hairline bg-surface transition-colors focus-within:border-subtle-outline"
+			class="sdp-frame relative overflow-hidden rounded-[5px] border border-hairline bg-surface transition-colors focus-within:border-subtle-outline"
+			style="--sdp-gutter: calc({digits}ch + 2 * var(--sdp-padding));"
 			bind:this={viewportEl}
 		>
 			<!--
-				The outer layer clips the marker to the editor; the inner one carries the
-				scroll offset, so only a change of section animates and scrolling stays
-				pinned to the text.
+				The band for the active line runs the whole width, underneath both the
+				numbers and the text, so nothing between the two edges is left out of
+				it. Drawn first, so everything else sits on top. The outer layer clips
+				it to the editor; the inner one carries the scroll offset.
 			-->
 			<div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
 				<div style="transform: translateY({-scrollTop}px);">
+					{#if highlightRow !== null}
+						<div
+							class="absolute inset-x-0 bg-line-highlight"
+							style="top: calc(var(--sdp-padding) + {highlightRow} * var(--sdp-line-height)); height: var(--sdp-line-height);"
+						></div>
+					{/if}
+				</div>
+			</div>
+
+			<!--
+				Numbers follow the text down but not sideways, so they are moved by
+				the same offset the overlay is scrolled to rather than scrolling with
+				it, and only the rows on screen are built. The section marker belongs
+				to this column too, standing in the room the numbers leave before the
+				text; only a change of section animates.
+			-->
+			<div class="sdp-gutter" aria-hidden="true">
+				<div style="transform: translateY({firstRow * lineHeight - scrollTop}px);">
+					{#each numbers as n (n)}
+						<div class={['sdp-number', caretLocation?.lineIndex === n - 1 && 'sdp-number-active']}>
+							{n}
+						</div>
+					{/each}
+				</div>
+
+				<div class="absolute inset-0" style="transform: translateY({-scrollTop}px);">
 					{#if sectionSpan}
 						<div
-							class="absolute left-[5px] w-[2px] rounded-full bg-token-type opacity-60 transition-[top,height] duration-150"
+							class="sdp-section"
 							style="top: calc(var(--sdp-padding) + {sectionSpan.first} * var(--sdp-line-height)); height: calc({sectionSpan.count} * var(--sdp-line-height));"
 						></div>
 					{/if}
@@ -580,7 +621,7 @@ SPDX-License-Identifier: MIT
 						{#each rows as line, r (firstRow + r)}
 							{@const i = firstRow + r}
 							<!-- prettier-ignore -->
-							<div class={['sdp-line w-fit min-w-full rounded-sm', active?.lineIndex === i && line.content && 'bg-line-highlight']}>{#each line.parts as part, p (p)}<span class={partClass(i, part)}>{part.text}</span>{/each}</div>
+							<div class="sdp-line">{#each line.parts as part, p (p)}<span class={partClass(i, part)}>{part.text}</span>{/each}</div>
 						{/each}
 					</div>
 				</div>
@@ -655,7 +696,7 @@ SPDX-License-Identifier: MIT
 			{#if showX}
 				<div
 					class="sdp-scrollbar sdp-scrollbar-x"
-					style="right: {showY ? 'var(--sdp-scrollbar)' : '0px'};"
+					style="left: var(--sdp-gutter); right: {showY ? 'var(--sdp-scrollbar)' : '0px'};"
 					bind:clientWidth={trackX}
 					onpointerdown={startDrag(false)}
 					role="scrollbar"
