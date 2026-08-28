@@ -129,12 +129,14 @@ code {
 	 * No horizontal padding: a textarea's native text layout treats padding-left
 	 * as somewhere the text may scroll to but padding-right as nothing at all, so
 	 * a padded editor can neither arrow its way back to column 0 nor scroll far
-	 * enough to leave a gutter on the right. Beginning the layers after the line
-	 * numbers gives the left its room without either of those, and leaves both
-	 * layers with the same scrollable width.
+	 * enough to leave a gutter on the right. Insetting the layers instead — after
+	 * the line numbers on the left, short of the vertical scrollbar's width on the
+	 * right — gives both edges their room without either problem, and leaves every
+	 * layer with the same scrollable width.
 	 */
 	inset: 0;
 	left: var(--sdp-gutter, 0px);
+	right: var(--sdp-scrollbar, 0px);
 	padding: var(--sdp-padding) 0;
 
 	font-family: var(--font-mono);
