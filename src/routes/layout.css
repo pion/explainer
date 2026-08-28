@@ -49,6 +49,9 @@
 	--color-token-key-wash: light-dark(#9a5b1226, #e6b87733);
 	--color-token-value-wash: light-dark(#1f6f8b26, #9fd2e833);
 
+	--color-scrollbar: light-dark(#0f214247, #ffffff47);
+	--color-scrollbar-active: light-dark(#0f214285, #ffffff85);
+
 	--color-warn: light-dark(#b3261e, #ff8a80);
 	--color-warn-wash: light-dark(#b3261e1a, #ff8a801f);
 }
@@ -60,6 +63,7 @@
 
 	--sdp-padding: 0.75rem;
 	--sdp-line-height: 24px;
+	--sdp-scrollbar: 10px;
 }
 
 :root[data-theme='light'] {
@@ -116,7 +120,20 @@ code {
  * marker cannot drift out of step with the text either.
  */
 .sdp-layer {
-	padding: var(--sdp-padding);
+	position: absolute;
+
+	/*
+	 * Sideways room is made by insetting the layer rather than padding it. A
+	 * textarea's native text layout treats padding-left as somewhere the text
+	 * may scroll to but padding-right as nothing at all, so a padded editor can
+	 * neither arrow its way back to a left-hand gutter nor scroll far enough to
+	 * leave a right-hand one. Insetting gives both, and leaves the two layers
+	 * with the same scrollable width to boot.
+	 *
+	 */
+	inset: 0 var(--sdp-padding);
+	padding: var(--sdp-padding) 0;
+
 	font-family: var(--font-mono);
 	font-size: 16px;
 	line-height: var(--sdp-line-height);
@@ -125,14 +142,60 @@ code {
 }
 
 /*
- * A block container counts its own trailing padding as somewhere that can be
- * scrolled to; a textarea's native text layout does not. That gave the overlay
- * one padding more sideways travel than the text it mirrors, so mapping the two
- * by scroll fraction pulled them apart towards the right-hand end. The overlay
- * only needs the padding that places its first character.
+ * A native scrollbar is painted inside the element that scrolls, and that
+ * element is inset to make the text's gutters, which left the scrollbar floating
+ * short of the frame. So the editor's own are hidden and drawn as overlays
+ * instead: they sit against the frame, inside the gutter where they cover no
+ * text, and take nothing out of the editor's client box — which is what leaves
+ * both layers with exactly the same scrollport, and the overlay dead in step
+ * with the text at every offset.
  */
-.sdp-overlay {
-	padding-right: 0;
+.sdp-editor {
+	scrollbar-width: none;
+}
+
+.sdp-editor::-webkit-scrollbar {
+	display: none;
+}
+
+.sdp-scrollbar {
+	position: absolute;
+	z-index: 1;
+	touch-action: none;
+}
+
+.sdp-scrollbar-y {
+	top: 0;
+	right: 0;
+	width: var(--sdp-scrollbar);
+}
+
+.sdp-scrollbar-x {
+	bottom: 0;
+	left: 0;
+	height: var(--sdp-scrollbar);
+}
+
+.sdp-thumb {
+	position: absolute;
+	background-color: var(--color-scrollbar);
+	transition: background-color 150ms;
+}
+
+/* Square and flush: the frame's own rounding is what trims the ends. */
+.sdp-scrollbar-y .sdp-thumb {
+	right: 0;
+	width: var(--sdp-scrollbar);
+}
+
+.sdp-scrollbar-x .sdp-thumb {
+	bottom: 0;
+	height: var(--sdp-scrollbar);
+}
+
+.sdp-scrollbar:hover .sdp-thumb,
+.sdp-scrollbar:active .sdp-thumb {
+	background-color: var(--color-scrollbar-active);
 }
 
 /*
