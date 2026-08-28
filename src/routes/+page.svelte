@@ -470,6 +470,20 @@ SPDX-License-Identifier: MIT
 
 	$effect(() => theme.hydrate());
 
+	$effect(() => {
+		const resetScroll = () => {
+			if (editorEl) {
+				editorEl.scrollTop = 0;
+				editorEl.scrollLeft = 0;
+				syncScroll();
+			}
+		};
+
+		resetScroll();
+		window.addEventListener('pageshow', resetScroll);
+		return () => window.removeEventListener('pageshow', resetScroll);
+	});
+
 	// Anything that moves or resizes the editor invalidates the measured anchor,
 	// and a resize can also change the metrics the rows are counted off in.
 	$effect(() => {
