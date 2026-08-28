@@ -631,7 +631,7 @@ SPDX-License-Identifier: MIT
 				to this column too, standing in the room the numbers leave before the
 				text; only a change of section animates.
 			-->
-			<div class="sdp-gutter" aria-hidden="true">
+			<div inert class="sdp-gutter" aria-hidden="true">
 				<div style="transform: translateY({firstRow * lineHeight - scrollTop}px);">
 					{#each numbers as n (n)}
 						<div class={['sdp-number', caretLocation?.lineIndex === n - 1 && 'sdp-number-active']}>
