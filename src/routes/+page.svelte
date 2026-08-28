@@ -273,6 +273,92 @@ SPDX-License-Identifier: MIT
 		});
 	};
 
+	// What the editor has to scroll through, which is everything the overlay
+	// scrollbars are drawn from. Read back rather than derived, because the
+	// textarea's own layout is the authority on how wide its longest line is.
+	let view = $state({ top: 0, left: 0, scrollH: 0, scrollW: 0, clientH: 0, clientW: 0 });
+
+	const readView = () => {
+		if (!editorEl) return;
+
+		view = {
+			top: editorEl.scrollTop,
+			left: editorEl.scrollLeft,
+			scrollH: editorEl.scrollHeight,
+			scrollW: editorEl.scrollWidth,
+			clientH: editorEl.clientHeight,
+			clientW: editorEl.clientWidth
+		};
+	};
+
+	// Track lengths are measured rather than assumed, so the thumb arithmetic
+	// never has to restate the thickness the stylesheet picked.
+	let trackY = $state(0);
+	let trackX = $state(0);
+
+	// Shown only when there is something to scroll, and each track stops short of
+	// the other so the two never meet in the corner.
+	let showY = $derived(view.scrollH > view.clientH + 1);
+	let showX = $derived(view.scrollW > view.clientW + 1);
+
+	const MIN_THUMB = 24;
+
+	const thumbFor = (offset: number, content: number, client: number, track: number) => {
+		const range = content - client;
+		if (range <= 1 || track <= 0) return null;
+
+		const size = Math.max(MIN_THUMB, (client / content) * track);
+		const travel = track - size;
+
+		return { size, travel, range, pos: travel > 0 ? (offset / range) * travel : 0 };
+	};
+
+	let thumbY = $derived(thumbFor(view.top, view.scrollH, view.clientH, trackY));
+	let thumbX = $derived(thumbFor(view.left, view.scrollW, view.clientW, trackX));
+
+	const percent = (offset: number, content: number, client: number) =>
+		content > client ? Math.round((offset / (content - client)) * 100) : 0;
+
+	/**
+	 * Drives the editor from its overlay scrollbar. Pressing the track jumps the
+	 * thumb under the pointer and then keeps dragging from there, so a click and
+	 * a drag are the same gesture. Everything else follows from the editor's own
+	 * scroll event, exactly as it does for the wheel.
+	 */
+	const startDrag = (vertical: boolean) => (event: PointerEvent) => {
+		const thumb = vertical ? thumbY : thumbX;
+		const track = event.currentTarget as HTMLElement;
+		if (!editorEl || !thumb) return;
+
+		event.preventDefault();
+		track.setPointerCapture(event.pointerId);
+
+		const box = track.getBoundingClientRect();
+		const along = (e: PointerEvent) => (vertical ? e.clientY - box.top : e.clientX - box.left);
+
+		// Where on the thumb it was taken hold of; pressing the bare track centres
+		// the thumb on the pointer instead.
+		let grab = along(event) - thumb.pos;
+		if (grab < 0 || grab > thumb.size) grab = thumb.size / 2;
+
+		const to = (e: PointerEvent) => {
+			const offset = thumb.travel > 0 ? ((along(e) - grab) / thumb.travel) * thumb.range : 0;
+			if (vertical) editorEl!.scrollTop = offset;
+			else editorEl!.scrollLeft = offset;
+		};
+
+		const stop = () => {
+			track.removeEventListener('pointermove', to);
+			track.removeEventListener('pointerup', stop);
+			track.removeEventListener('pointercancel', stop);
+		};
+
+		to(event);
+		track.addEventListener('pointermove', to);
+		track.addEventListener('pointerup', stop);
+		track.addEventListener('pointercancel', stop);
+	};
+
 	const syncScroll = () => {
 		if (!ghostEl || !editorEl) return;
 
@@ -295,6 +381,7 @@ SPDX-License-Identifier: MIT
 		// The section marker is drawn against the ghost's own line coordinates,
 		// so it has to follow the ghost's (corrected) offset, not the editor's.
 		scrollTop = ghostEl.scrollTop;
+		readView();
 		syncAfterRender();
 	};
 
@@ -339,10 +426,12 @@ SPDX-License-Identifier: MIT
 	$effect(() => {
 		void ghostEl;
 		measureRows();
+		readView();
 
 		const reposition = () => placeTooltip();
 		const remeasure = () => {
 			measureRows();
+			readView();
 			placeTooltip();
 		};
 
@@ -372,6 +461,8 @@ SPDX-License-Identifier: MIT
 		// and `rows`, because the anchor's element only exists while its line is
 		// one of the ones built.
 		void [debouncedActive, tooltip, rows, focused];
+		// Editing changes how far there is to scroll, and so the size of a thumb.
+		readView();
 		placeTooltip();
 	});
 
@@ -469,7 +560,7 @@ SPDX-License-Identifier: MIT
 			</div>
 
 			<div
-				class="sdp-layer sdp-overlay pointer-events-none absolute inset-0 overflow-hidden"
+				class="sdp-layer pointer-events-none overflow-hidden"
 				aria-hidden="true"
 				bind:this={ghostEl}
 				bind:clientHeight={ghostHeight}
@@ -496,13 +587,14 @@ SPDX-License-Identifier: MIT
 			</div>
 
 			{#if sdpText === ''}
-				<div class="sdp-layer pointer-events-none absolute inset-0 opacity-60 select-none">
+				<div class="sdp-layer pointer-events-none opacity-60 select-none">
 					Paste your session description here...
 				</div>
 			{/if}
 
 			<textarea
-				class="sdp-layer absolute inset-0 size-full resize-none overflow-auto bg-transparent text-transparent caret-heading outline-none"
+				id="sdp-editor"
+				class="sdp-layer sdp-editor resize-none overflow-auto bg-transparent text-transparent caret-heading outline-none"
 				spellcheck="false"
 				autocapitalize="none"
 				autocomplete="off"
@@ -529,6 +621,57 @@ SPDX-License-Identifier: MIT
 					syncCaret();
 				}}
 				onblur={() => (focused = false)}></textarea>
+
+			<!--
+				Drawn against the frame rather than inside the editor, so the gutters
+				stay exactly one padding wide on both sides whatever the platform
+				would have spent on a scrollbar of its own.
+			-->
+			{#if showY}
+				<!--
+					Not a tab stop: the editor it controls is focusable and scrolls from
+					the keyboard itself, so this only has to describe where it has got to.
+				-->
+				<div
+					class="sdp-scrollbar sdp-scrollbar-y"
+					style="bottom: {showX ? 'var(--sdp-scrollbar)' : '0px'};"
+					bind:clientHeight={trackY}
+					onpointerdown={startDrag(true)}
+					role="scrollbar"
+					tabindex="-1"
+					aria-controls="sdp-editor"
+					aria-orientation="vertical"
+					aria-label="Scroll session description vertically"
+					aria-valuemin={0}
+					aria-valuemax={100}
+					aria-valuenow={percent(view.top, view.scrollH, view.clientH)}
+				>
+					{#if thumbY}
+						<div class="sdp-thumb" style="top: {thumbY.pos}px; height: {thumbY.size}px;"></div>
+					{/if}
+				</div>
+			{/if}
+
+			{#if showX}
+				<div
+					class="sdp-scrollbar sdp-scrollbar-x"
+					style="right: {showY ? 'var(--sdp-scrollbar)' : '0px'};"
+					bind:clientWidth={trackX}
+					onpointerdown={startDrag(false)}
+					role="scrollbar"
+					tabindex="-1"
+					aria-controls="sdp-editor"
+					aria-orientation="horizontal"
+					aria-label="Scroll session description horizontally"
+					aria-valuemin={0}
+					aria-valuemax={100}
+					aria-valuenow={percent(view.left, view.scrollW, view.clientW)}
+				>
+					{#if thumbX}
+						<div class="sdp-thumb" style="left: {thumbX.pos}px; width: {thumbX.size}px;"></div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<aside class="min-h-0 overflow-y-auto lg:pr-2">
