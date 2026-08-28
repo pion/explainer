@@ -124,8 +124,25 @@ code {
 	tab-size: 2;
 }
 
+/*
+ * A block container counts its own trailing padding as somewhere that can be
+ * scrolled to; a textarea's native text layout does not. That gave the overlay
+ * one padding more sideways travel than the text it mirrors, so mapping the two
+ * by scroll fraction pulled them apart towards the right-hand end. The overlay
+ * only needs the padding that places its first character.
+ */
+.sdp-overlay {
+	padding-right: 0;
+}
+
+/*
+ * A line owns its own whitespace handling rather than inheriting it, so the
+ * wrappers the overlay hangs its rows off can be indented normally in the
+ * template without that indentation rendering as text inside the editor.
+ */
 .sdp-line {
 	height: var(--sdp-line-height);
+	white-space: pre;
 }
 
 /* The wordmark is drawn with fill="currentColor"; the dot keeps the brand red. */

@@ -33,12 +33,17 @@ export type Details = {
 	level?: Level;
 };
 
-/** One matched span of a line: either a grammar literal or a bound argument. */
+/**
+ * One matched span of a line: either a grammar literal or a bound argument.
+ * Offsets are relative to the line, not to the description, so the same line
+ * text parses to the same fields wherever it appears — which is what lets the
+ * parser cache a line and reuse it across edits.
+ */
 export type SDPField = {
 	text: string;
-	/** Absolute offset of the first character in the source text. */
+	/** Offset of the first character, from the start of the line. */
 	start: number;
-	/** Absolute offset just past the last character in the source text. */
+	/** Offset just past the last character, from the start of the line. */
 	end: number;
 	/** Index into the owning `Details.args`, or null for literals and unmatched tokens. */
 	argIndex: number | null;
@@ -55,7 +60,9 @@ export type SDPPart = {
 
 export type SDPLine = {
 	content: string;
+	/** Absolute offset of the line's first character in the source text. */
 	start: number;
+	/** Absolute offset just past the line's last character in the source text. */
 	end: number;
 	/** The single character before the "=", when the line has the shape "x=value". */
 	type?: string;
@@ -72,3 +79,11 @@ export type SDPLine = {
 
 /** A caret or pointer position resolved onto a line and, when inside one, a field. */
 export type SDPLocation = { lineIndex: number; fieldIndex: number | null };
+
+/** Whole-description measurements the editor's chrome is laid out from. */
+export type SDPOutline = {
+	/** Media section index → the run of lines it spans, for the gutter marker. */
+	sections: Map<number, { first: number; count: number }>;
+	/** Length of the longest line, which sets how far the editor scrolls sideways. */
+	columns: number;
+};

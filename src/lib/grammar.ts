@@ -30,7 +30,11 @@ type Node =
 
 export type Token = { text: string; start: number };
 
-/** A span of the source bound to a placeholder (`name`) or matched literally. */
+/**
+ * A span of the line bound to a placeholder (`name`) or matched literally.
+ * Offsets are relative to the start of the line, so a parsed line can be cached
+ * and reused wherever in a description the same text turns up.
+ */
 export type Match = { text: string; start: number; end: number; name: string | null };
 
 export type MatchResult = {
@@ -236,12 +240,7 @@ const matchAtoms = (
  * forgiving — a line being typed is malformed most of the time — so it binds
  * what it can and reports where it gave up rather than failing outright.
  */
-export const matchTemplate = (
-	grammar: Grammar,
-	tokens: Token[],
-	source: string,
-	sourceStart: number
-): MatchResult => {
+export const matchTemplate = (grammar: Grammar, tokens: Token[], source: string): MatchResult => {
 	// A greedy argument runs to the end of the last token rather than the end of
 	// the line, so trailing whitespace never lands inside a highlighted field.
 	const last = tokens[tokens.length - 1];
@@ -277,7 +276,7 @@ export const matchTemplate = (
 		const tail = bound.matches[bound.matches.length - 1];
 		if (tail?.name && grammar.isGreedy(tail.name) && consumed < tokens.length) {
 			tail.end = lineEnd;
-			tail.text = source.slice(tail.start - sourceStart, lineEnd - sourceStart);
+			tail.text = source.slice(tail.start, lineEnd);
 			consumed = tokens.length;
 		}
 
