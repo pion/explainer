@@ -696,6 +696,7 @@ SPDX-License-Identifier: MIT
 				bind:value={sdpText}
 				bind:this={editorEl}
 				onscroll={syncScroll}
+				ondrop={() => requestAnimationFrame(() => syncScroll())}
 				onmousemove={onPointerMove}
 				onmouseleave={onPointerLeave}
 				oninput={() => {
