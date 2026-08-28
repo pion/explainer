@@ -64,6 +64,9 @@
 	--sdp-padding: 0.75rem;
 	--sdp-line-height: 24px;
 	--sdp-scrollbar: 10px;
+
+	/* What the section marker keeps clear of the text it stands beside. */
+	--sdp-marker-gap: 4px;
 }
 
 :root[data-theme='light'] {
@@ -123,15 +126,15 @@ code {
 	position: absolute;
 
 	/*
-	 * Sideways room is made by insetting the layer rather than padding it. A
-	 * textarea's native text layout treats padding-left as somewhere the text
-	 * may scroll to but padding-right as nothing at all, so a padded editor can
-	 * neither arrow its way back to a left-hand gutter nor scroll far enough to
-	 * leave a right-hand one. Insetting gives both, and leaves the two layers
-	 * with the same scrollable width to boot.
-	 *
+	 * No horizontal padding: a textarea's native text layout treats padding-left
+	 * as somewhere the text may scroll to but padding-right as nothing at all, so
+	 * a padded editor can neither arrow its way back to column 0 nor scroll far
+	 * enough to leave a gutter on the right. Beginning the layers after the line
+	 * numbers gives the left its room without either of those, and leaves both
+	 * layers with the same scrollable width.
 	 */
-	inset: 0 var(--sdp-padding);
+	inset: 0;
+	left: var(--sdp-gutter, 0px);
 	padding: var(--sdp-padding) 0;
 
 	font-family: var(--font-mono);
@@ -196,6 +199,74 @@ code {
 .sdp-scrollbar:hover .sdp-thumb,
 .sdp-scrollbar:active .sdp-thumb {
 	background-color: var(--color-scrollbar-active);
+}
+
+/*
+ * The editor is laid out in characters — how wide the numbers need to be, how
+ * much room the overlay reserves for the longest line — so the frame carries the
+ * text metrics its children resolve `ch` against, including the ones that hold
+ * no text of their own.
+ */
+.sdp-frame {
+	font-family: var(--font-mono);
+	font-size: 16px;
+}
+
+/*
+ * The line numbers stand outside the text's scrolling box, so they hold still
+ * while it scrolls sideways and are moved by hand to follow it down. Their width
+ * is what the editor layers begin after, and it is measured rather than stated
+ * because it grows with the line count.
+ */
+.sdp-gutter {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: var(--sdp-gutter);
+	overflow: hidden;
+	padding: var(--sdp-padding) 0;
+	font-family: var(--font-mono);
+	font-size: 16px;
+	line-height: var(--sdp-line-height);
+	text-align: right;
+	user-select: none;
+}
+
+.sdp-number {
+	height: var(--sdp-line-height);
+	padding: 0 var(--sdp-padding);
+	color: var(--color-text);
+	opacity: 0.4;
+}
+
+/*
+ * The media description the active line belongs to, marked down the inside edge
+ * of the number column so the block a line is read against is visible without
+ * scanning upwards for the "m=" that opened it. It sits in the column rather
+ * than being offset into place from outside it, so the gap it keeps from the
+ * text is its own margin and not an arithmetic on the column's width.
+ */
+.sdp-section {
+	position: absolute;
+	right: var(--sdp-marker-gap);
+	width: 2px;
+	border-radius: 999px;
+	background-color: var(--color-token-type);
+	opacity: 0.6;
+	transition:
+		top 150ms,
+		height 150ms;
+}
+
+/*
+ * Marks where the caret is, and only that: the pointer sweeping over the text
+ * moves the highlight and the details panel, but the line you are editing is
+ * somewhere you put it deliberately and should not move with the mouse.
+ */
+.sdp-number-active {
+	color: var(--color-heading);
+	opacity: 1;
 }
 
 /*
